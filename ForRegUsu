@@ -14,7 +14,7 @@ from PIL import Image, ImageTk
 raiz = Tk()
 raiz.title("Sistema de Gestión de Usuarios")
 raiz.geometry("1150x700")
-raiz.resizable(False, False)
+raiz.resizable(False, False) #Laury el amor de mi vida
 
 # ========================================================
 # VARIABLES
