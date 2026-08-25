@@ -37,3 +37,119 @@ tipo_usuario = StringVar(value="Seleccione")
 
 ruta_imagen = StringVar()
 ruta_archivo = StringVar()
+
+# ========================================================
+# CONEXIÓN A BASE DE DATOS
+# ========================================================
+
+def conexion_bbdd():
+    
+    conexion = sqlite3.connect("BaseUsuarios.db")
+    cursor = conexion.cursor()
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            apellido TEXT NOT NULL,
+            direccion TEXT,
+            ciudad TEXT,
+            codigo_postal TEXT,
+            genero TEXT,
+            estado INTEGER,
+            tipo_usuario TEXT,
+            imagen TEXT,
+            archivo TEXT
+        )
+    """)
+    
+    conexion.commit()
+    conexion.close()
+
+conexion_bbdd()
+
+
+# ========================================================
+# FUNCIÓN LIMPIAR
+# ========================================================
+
+def limpiar():
+    
+    id_seleccionado.set("")
+    
+    nombre.set("")
+    apellido.set("")
+    direccion.set("")
+    ciudad.set("")
+    codigo_postal.set("")
+    
+    genero.set("Masculino")
+    estado.set(0)
+    
+    tipo_usuario.set("Seleccione")
+    
+    ruta_imagen.set("")
+    ruta_archivo.set("")
+    
+    etiqueta_imagen.config(image="")
+    etiqueta_imagen.image = None
+
+# ========================================================
+# ADJUNTAR IMAGEN
+# ========================================================
+
+def seleccionar_imagen():
+    
+    archivo = filedialog.askopenfilename(
+        title="Seleccionar imagen",
+        filetypes=[
+            ("Imágenes", "*.png *.jpg *.jpeg *.gif"),
+            ("Todos los archivos", "*.*")
+        ]
+    )
+    
+    if archivo:
+        
+        ruta_imagen.set(archivo)
+        
+        try:
+            imagen = Image.open(archivo)
+            
+            imagen.thumbnail((150, 150))
+            
+            imagen_tk = ImageTk.PhotoImage(imagen)
+            
+            etiqueta_imagen.config(image=imagen_tk)
+            
+            etiqueta_imagen.image = imagen_tk
+            
+        except Exception as error:
+            
+            messagebox.showerror(
+                "Error",
+                f"No se pudo cargar la imagen:\n{error}"
+            )
+
+# ========================================================
+# ADJUNTAR ARCHIVO
+# ========================================================
+
+def seleccionar_archivo():
+    
+    archivo = filedialog.askopenfilename(
+        title="Seleccionar archivo",
+        filetypes=[
+            ("Documentos", "*.pdf *.docx *.xlsx *.txt"),
+            ("Todos los archivos", "*.*")
+        ]
+    )
+    
+    if archivo:
+        
+        ruta_archivo.set(archivo)
+        
+        nombre_archivo = os.path.basename(archivo)
+        
+        etiqueta_archivo.config(
+            text=f"Archivo: {nombre_archivo}"
+        )
