@@ -1,1 +1,38 @@
-# formulario-de-registro-d-ususario
+# Poyecto 1:  Sistema Gestion
+Miguel Perez y Marcos Salas
+
+# Problema Solucionado
+Reemplaza el registro manual en hojas de cálculo o archivos sueltos por un sistema centralizado, donde es fácil guardar, consultar, cambiar o borrar usuarios sin enredos.
+
+# Tecnologias utilizadas
+Python 3
+
+Tkinter
+
+SQLite3
+
+Visual Studio Code
+
+# Funcionamiento
+1. Las opciones del menú
+Arriba en la esquina tienes el menú BBDD:
+
+Conectar: Prepara la base de datos para empezar a guardar cosas.
+
+Salir: Cierra el programa (te pregunta antes si estás seguro).
+
+2. Los botones de la pantalla
+Crear: Llenas las casillas (Nombre, Contraseña, Apellido, Dirección y Comentarios) y le das clic a Crear para guardarlo.
+
+Leer: Si quieres buscar a alguien en específico, pones su número de ID y le das a Leer. Los datos de esa persona salen de una en las casillas.
+
+Actualizar: Para cambiarle algo a un usuario, pones su ID, cambias los datos que quieras en las casillas y le das a Actualizar.
+
+Eliminar: Pones el ID, le das a Eliminar y confirmas en la ventana que sale.
+
+Limpiar: Deja todas las casillas vacías de un solo toque para que no tengas que borrar letra por letra.
+
+3. La tabla de abajo
+Ahí ves a todos los usuarios registrados.
+
+Atajo fácil: Si le das clic a cualquier persona en la tabla, sus datos se pasan solos a las casillas de arriba. Así no tienes que estar escribiendo el ID a mano para editarlo o borrarlo.
