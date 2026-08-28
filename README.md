@@ -22,7 +22,7 @@ Conectar: Prepara la base de datos para empezar a guardar cosas.
 Salir: Cierra el programa (te pregunta antes si estás seguro).
 
 2. Los botones de la pantalla
-Crear: Llenas las casillas (Nombre, Contraseña, Apellido, Dirección y Comentarios) y le das clic a Crear para guardarlo.
+Crear: Llenas las casillas (Nombre, Contraseña, Apellido, Ciudad, Codigo Postal, Dirección y Comentarios) y le das clic a Crear para guardarlo.
 
 Leer: Si quieres buscar a alguien en específico, pones su número de ID y le das a Leer. Los datos de esa persona salen de una en las casillas.
 
