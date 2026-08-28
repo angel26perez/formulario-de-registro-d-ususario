@@ -1,4 +1,4 @@
-# Poyecto 1:  Sistema Gestion
+# Poyecto 1:  Sistema registro de usuarios
 Miguel Perez y Marcos Salas
 
 # Problema Solucionado
