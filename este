@@ -7,6 +7,7 @@ import os
 
 from PIL import Image, ImageTk
 
+
 # ========================================================
 # CONFIGURACIÓN DE LA VENTANA
 # ========================================================
@@ -37,7 +38,6 @@ telefono = StringVar()
 genero = StringVar(value="Masculino")
 estado = IntVar()
 tipo_usuario = StringVar(value="Seleccione")
-comentarios = StringVar()
 
 ruta_imagen = StringVar()
 ruta_archivo = StringVar()
@@ -48,9 +48,10 @@ ruta_archivo = StringVar()
 # ========================================================
 
 def conexion_bbdd():
+
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
-    
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,14 +70,16 @@ def conexion_bbdd():
             archivo TEXT
         )
     """)
-    
+
     # Verificar si la columna comentarios ya existe
     cursor.execute("PRAGMA table_info(usuarios)")
     columnas_bbdd = [columna[1] for columna in cursor.fetchall()]
-    
+
     if "comentarios" not in columnas_bbdd:
-        cursor.execute("ALTER TABLE usuarios ADD COLUMN comentarios TEXT")
-    
+        cursor.execute(
+            "ALTER TABLE usuarios ADD COLUMN comentarios TEXT"
+        )
+
     conexion.commit()
     conexion.close()
 
@@ -89,6 +92,7 @@ conexion_bbdd()
 # ========================================================
 
 def limpiar():
+
     id_seleccionado.set("")
     nombre.set("")
     apellido.set("")
@@ -100,14 +104,21 @@ def limpiar():
     genero.set("Masculino")
     estado.set(0)
     tipo_usuario.set("Seleccione")
-    comentarios.set("")
+
+    # CORREGIDO:
+    # El campo comentarios es un Text, por eso se limpia
+    # utilizando delete()
+    entrada_comentarios.delete("1.0", END)
+
     ruta_imagen.set("")
     ruta_archivo.set("")
-    
+
     etiqueta_imagen.config(image="")
     etiqueta_imagen.image = None
-    
-    etiqueta_archivo.config(text="Archivo: No adjunto")
+
+    etiqueta_archivo.config(
+        text="Archivo: No adjunto"
+    )
 
 
 # ========================================================
@@ -115,6 +126,7 @@ def limpiar():
 # ========================================================
 
 def seleccionar_imagen():
+
     archivo = filedialog.askopenfilename(
         title="Seleccionar imagen",
         filetypes=[
@@ -122,19 +134,26 @@ def seleccionar_imagen():
             ("Todos los archivos", "*.*")
         ]
     )
-    
+
     if archivo:
+
         ruta_imagen.set(archivo)
-        
+
         try:
+
             imagen = Image.open(archivo)
             imagen.thumbnail((150, 150))
+
             imagen_tk = ImageTk.PhotoImage(imagen)
-            
-            etiqueta_imagen.config(image=imagen_tk)
+
+            etiqueta_imagen.config(
+                image=imagen_tk
+            )
+
             etiqueta_imagen.image = imagen_tk
-            
+
         except Exception as error:
+
             messagebox.showerror(
                 "Error",
                 f"No se pudo cargar la imagen:\n{error}"
@@ -146,6 +165,7 @@ def seleccionar_imagen():
 # ========================================================
 
 def seleccionar_archivo():
+
     archivo = filedialog.askopenfilename(
         title="Seleccionar archivo",
         filetypes=[
@@ -153,10 +173,13 @@ def seleccionar_archivo():
             ("Todos los archivos", "*.*")
         ]
     )
-    
+
     if archivo:
+
         ruta_archivo.set(archivo)
+
         nombre_archivo = os.path.basename(archivo)
+
         etiqueta_archivo.config(
             text=f"Archivo: {nombre_archivo}"
         )
@@ -167,62 +190,71 @@ def seleccionar_archivo():
 # ========================================================
 
 def insertar():
-    
+
     if nombre.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el nombre."
         )
         return
-    
+
     if apellido.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el apellido."
         )
         return
-    
+
     if telefono.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el teléfono."
         )
         return
-    
+
     if direccion.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar la dirección."
         )
         return
-    
+
     if ciudad.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar la ciudad."
         )
         return
-    
+
     if codigo_postal.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el código postal."
         )
         return
-    
+
     if correo.get() == "":
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el correo."
         )
         return
-    
+
     if tipo_usuario.get() == "Seleccione":
         messagebox.showwarning(
             "Advertencia",
             "Debe seleccionar el tipo de usuario."
         )
         return
+
+    # ====================================================
+    # OBTENER COMENTARIOS DEL CAMPO TEXT
+    # ====================================================
+
+    texto_comentarios = entrada_comentarios.get(
+        "1.0",
+        END
+    ).strip()
 
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
@@ -246,6 +278,7 @@ def insertar():
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
+
         nombre.get(),
         apellido.get(),
         telefono.get(),
@@ -256,7 +289,10 @@ def insertar():
         genero.get(),
         estado.get(),
         tipo_usuario.get(),
-        comentarios.get(),
+
+        # CORREGIDO
+        texto_comentarios,
+
         ruta_imagen.get(),
         ruta_archivo.get()
     ))
@@ -268,7 +304,7 @@ def insertar():
         "Registro",
         "Usuario registrado correctamente."
     )
-    
+
     mostrar_datos()
     limpiar()
 
@@ -278,13 +314,13 @@ def insertar():
 # ========================================================
 
 def mostrar_datos():
-    
+
     for elemento in tabla.get_children():
         tabla.delete(elemento)
-        
+
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
-    
+
     cursor.execute("""
         SELECT
             id,
@@ -304,14 +340,19 @@ def mostrar_datos():
         FROM usuarios
         ORDER BY id DESC
     """)
-    
+
     registros = cursor.fetchall()
+
     conexion.close()
-    
+
     for registro in registros:
-        
-        estado_texto = "Activo" if registro[9] == 1 else "Inactivo"
-        
+
+        estado_texto = (
+            "Activo"
+            if registro[9] == 1
+            else "Inactivo"
+        )
+
         tabla.insert(
             "",
             END,
@@ -337,17 +378,20 @@ def mostrar_datos():
 # ========================================================
 
 def seleccionar_registro(event):
-    
+
     seleccionado = tabla.focus()
-    
+
     if not seleccionado:
         return
-        
-    datos = tabla.item(seleccionado, "values")
-    
+
+    datos = tabla.item(
+        seleccionado,
+        "values"
+    )
+
     if not datos:
         return
-        
+
     id_seleccionado.set(datos[0])
     nombre.set(datos[1])
     apellido.set(datos[2])
@@ -357,19 +401,32 @@ def seleccionar_registro(event):
     codigo_postal.set(datos[6])
     correo.set(datos[7])
     genero.set(datos[8])
-    
+
+    # ====================================================
     # CORREGIDO:
-    # Antes estaba comentarios.set([11])
-    comentarios.set(datos[11])
-    
+    # Cargar comentarios dentro del Text
+    # ====================================================
+
+    entrada_comentarios.delete(
+        "1.0",
+        END
+    )
+
+    entrada_comentarios.insert(
+        "1.0",
+        datos[11]
+    )
+
     if datos[9] == "Activo":
         estado.set(1)
     else:
         estado.set(0)
-        
+
     tipo_usuario.set(datos[10])
-    
-    cargar_archivos_registro(datos[0])
+
+    cargar_archivos_registro(
+        datos[0]
+    )
 
 
 # ========================================================
@@ -377,52 +434,78 @@ def seleccionar_registro(event):
 # ========================================================
 
 def cargar_archivos_registro(id_usuario):
-    
+
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
-    
+
     cursor.execute(
-        "SELECT imagen, archivo FROM usuarios WHERE id = ?",
+        """
+        SELECT imagen, archivo
+        FROM usuarios
+        WHERE id = ?
+        """,
         (id_usuario,)
     )
-    
+
     registro = cursor.fetchone()
+
     conexion.close()
-    
+
     if not registro:
         return
 
     imagen = registro[0]
     archivo = registro[1]
-    
-    ruta_imagen.set(imagen if imagen else "")
-    ruta_archivo.set(archivo if archivo else "")
-    
+
+    ruta_imagen.set(
+        imagen if imagen else ""
+    )
+
+    ruta_archivo.set(
+        archivo if archivo else ""
+    )
+
     if archivo:
+
         etiqueta_archivo.config(
             text=f"Archivo: {os.path.basename(archivo)}"
         )
+
     else:
+
         etiqueta_archivo.config(
             text="Archivo: No adjunto"
         )
-        
+
     if imagen and os.path.exists(imagen):
-        
+
         try:
+
             img = Image.open(imagen)
             img.thumbnail((150, 150))
+
             img_tk = ImageTk.PhotoImage(img)
-            
-            etiqueta_imagen.config(image=img_tk)
+
+            etiqueta_imagen.config(
+                image=img_tk
+            )
+
             etiqueta_imagen.image = img_tk
-            
+
         except:
-            etiqueta_imagen.config(image="")
+
+            etiqueta_imagen.config(
+                image=""
+            )
+
             etiqueta_imagen.image = None
-            
+
     else:
-        etiqueta_imagen.config(image="")
+
+        etiqueta_imagen.config(
+            image=""
+        )
+
         etiqueta_imagen.image = None
 
 
@@ -431,17 +514,28 @@ def cargar_archivos_registro(id_usuario):
 # ========================================================
 
 def actualizar():
-    
+
     if id_seleccionado.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Seleccione primero un registro."
         )
+
         return
-        
+
+    # ====================================================
+    # OBTENER COMENTARIOS DEL TEXT
+    # ====================================================
+
+    texto_comentarios = entrada_comentarios.get(
+        "1.0",
+        END
+    ).strip()
+
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
-    
+
     cursor.execute("""
         UPDATE usuarios
         SET
@@ -460,6 +554,7 @@ def actualizar():
             archivo = ?
         WHERE id = ?
     """, (
+
         nombre.get(),
         apellido.get(),
         telefono.get(),
@@ -470,20 +565,23 @@ def actualizar():
         genero.get(),
         estado.get(),
         tipo_usuario.get(),
-        comentarios.get(),
+
+        # CORREGIDO
+        texto_comentarios,
+
         ruta_imagen.get(),
         ruta_archivo.get(),
         id_seleccionado.get()
     ))
-    
+
     conexion.commit()
     conexion.close()
-    
+
     messagebox.showinfo(
         "Actualizar",
         "Registro actualizado correctamente."
     )
-    
+
     mostrar_datos()
     limpiar()
 
@@ -493,37 +591,39 @@ def actualizar():
 # ========================================================
 
 def eliminar():
-    
+
     if id_seleccionado.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Seleccione un registro."
         )
+
         return
-        
+
     respuesta = messagebox.askyesno(
         "Eliminar",
         "¿Está seguro de eliminar este registro?"
     )
-    
+
     if respuesta:
-        
+
         conexion = sqlite3.connect("BaseUsuarios.db")
         cursor = conexion.cursor()
-        
+
         cursor.execute(
             "DELETE FROM usuarios WHERE id = ?",
             (id_seleccionado.get(),)
         )
-        
+
         conexion.commit()
         conexion.close()
-        
+
         messagebox.showinfo(
             "Eliminar",
             "Registro eliminado correctamente."
         )
-        
+
         mostrar_datos()
         limpiar()
 
@@ -533,15 +633,15 @@ def eliminar():
 # ========================================================
 
 def buscar():
-    
+
     texto = entrada_buscar.get()
-    
+
     for elemento in tabla.get_children():
         tabla.delete(elemento)
-        
+
     conexion = sqlite3.connect("BaseUsuarios.db")
     cursor = conexion.cursor()
-    
+
     cursor.execute("""
         SELECT
             id,
@@ -564,18 +664,24 @@ def buscar():
            OR ciudad LIKE ?
         ORDER BY id DESC
     """, (
+
         "%" + texto + "%",
         "%" + texto + "%",
         "%" + texto + "%"
     ))
-    
+
     registros = cursor.fetchall()
+
     conexion.close()
-    
+
     for registro in registros:
-        
-        estado_texto = "Activo" if registro[9] == 1 else "Inactivo"
-        
+
+        estado_texto = (
+            "Activo"
+            if registro[9] == 1
+            else "Inactivo"
+        )
+
         tabla.insert(
             "",
             END,
@@ -601,12 +707,12 @@ def buscar():
 # ========================================================
 
 def salir_programa():
-    
+
     respuesta = messagebox.askyesno(
         "Salir",
         "¿Está seguro de que desea salir del programa?"
     )
-    
+
     if respuesta:
         raiz.destroy()
 
@@ -628,6 +734,7 @@ miFrame.pack(
     pady=10,
     fill="x"
 )
+
 
 Label(
     miFrame,
@@ -667,6 +774,7 @@ Entry(
     pady=5
 )
 
+
 Label(
     miFrame,
     text="Apellido:"
@@ -688,6 +796,7 @@ Entry(
     padx=5,
     pady=5
 )
+
 
 Label(
     miFrame,
@@ -738,6 +847,7 @@ Entry(
     pady=5
 )
 
+
 Label(
     miFrame,
     text="Ciudad:"
@@ -759,6 +869,7 @@ Entry(
     padx=5,
     pady=5
 )
+
 
 Label(
     miFrame,
@@ -809,6 +920,7 @@ Entry(
     pady=5
 )
 
+
 Label(
     miFrame,
     text="Género:"
@@ -818,6 +930,7 @@ Label(
     padx=5,
     pady=5
 )
+
 
 Radiobutton(
     miFrame,
@@ -829,6 +942,7 @@ Radiobutton(
     column=3,
     sticky="w"
 )
+
 
 Radiobutton(
     miFrame,
@@ -846,10 +960,6 @@ Radiobutton(
 # COMENTARIOS
 # ========================================================
 
-# ========================================================
-# COMENTARIOS
-# ========================================================
-
 Label(
     miFrame,
     text="Comentarios:"
@@ -860,6 +970,7 @@ Label(
     pady=5,
     sticky="ne"
 )
+
 
 entrada_comentarios = Text(
     miFrame,
@@ -877,7 +988,6 @@ entrada_comentarios.grid(
 )
 
 
-
 # ========================================================
 # FILA 5: ESTADO Y TIPO DE USUARIO
 # ========================================================
@@ -892,6 +1002,7 @@ Checkbutton(
     pady=5
 )
 
+
 Label(
     miFrame,
     text="Tipo de usuario:"
@@ -901,6 +1012,7 @@ Label(
     padx=5,
     pady=5
 )
+
 
 combo_tipo = ttk.Combobox(
     miFrame,
@@ -937,6 +1049,7 @@ Label(
     pady=5
 )
 
+
 Button(
     miFrame,
     text="Seleccionar Imagen",
@@ -950,6 +1063,7 @@ Button(
     padx=5,
     pady=5
 )
+
 
 etiqueta_imagen = Label(
     miFrame,
@@ -985,6 +1099,7 @@ Button(
     pady=5
 )
 
+
 etiqueta_archivo = Label(
     miFrame,
     text="Archivo: No adjunto",
@@ -1019,6 +1134,7 @@ frame_botones.pack(
     fill="x"
 )
 
+
 Button(
     frame_botones,
     text="➕ INSERTAR",
@@ -1031,6 +1147,7 @@ Button(
     side=LEFT,
     padx=5
 )
+
 
 Button(
     frame_botones,
@@ -1045,6 +1162,7 @@ Button(
     padx=5
 )
 
+
 Button(
     frame_botones,
     text="ELIMINAR",
@@ -1057,6 +1175,7 @@ Button(
     side=LEFT,
     padx=5
 )
+
 
 Button(
     frame_botones,
@@ -1071,10 +1190,11 @@ Button(
     padx=5
 )
 
+
 Button(
     frame_botones,
     text="🚪 SALIR",
-    command=raiz.destroy,
+    command=salir_programa,
     bg="#7F8C8D",
     fg="white",
     font=("Arial", 10, "bold"),
@@ -1097,6 +1217,7 @@ frame_buscar.pack(
     fill="x"
 )
 
+
 Label(
     frame_buscar,
     text="Buscar:"
@@ -1104,6 +1225,7 @@ Label(
     side=LEFT,
     padx=5
 )
+
 
 entrada_buscar = Entry(
     frame_buscar,
@@ -1114,6 +1236,7 @@ entrada_buscar.pack(
     side=LEFT,
     padx=5
 )
+
 
 Button(
     frame_buscar,
@@ -1126,6 +1249,7 @@ Button(
     side=LEFT,
     padx=5
 )
+
 
 Button(
     frame_buscar,
@@ -1157,6 +1281,7 @@ frame_tabla.pack(
     expand=True
 )
 
+
 scroll_vertical = Scrollbar(
     frame_tabla,
     orient=VERTICAL
@@ -1166,6 +1291,7 @@ scroll_vertical.pack(
     side=RIGHT,
     fill=Y
 )
+
 
 scroll_horizontal = Scrollbar(
     frame_tabla,
@@ -1209,11 +1335,12 @@ tabla = ttk.Treeview(
 
 
 for columna in columnas:
+
     tabla.heading(
         columna,
         text=columna
     )
-    
+
     tabla.column(
         columna,
         width=120,
@@ -1221,18 +1348,65 @@ for columna in columnas:
     )
 
 
-tabla.column("ID", width=40)
-tabla.column("Nombre", width=90)
-tabla.column("Apellido", width=90)
-tabla.column("Teléfono", width=90)
-tabla.column("Dirección", width=100)
-tabla.column("Ciudad", width=90)
-tabla.column("Código Postal", width=90)
-tabla.column("Correo", width=130)
-tabla.column("Género", width=80)
-tabla.column("Estado", width=80)
-tabla.column("Tipo Usuario", width=110)
-tabla.column("Comentarios", width=180)
+tabla.column(
+    "ID",
+    width=40
+)
+
+tabla.column(
+    "Nombre",
+    width=90
+)
+
+tabla.column(
+    "Apellido",
+    width=90
+)
+
+tabla.column(
+    "Teléfono",
+    width=90
+)
+
+tabla.column(
+    "Dirección",
+    width=100
+)
+
+tabla.column(
+    "Ciudad",
+    width=90
+)
+
+tabla.column(
+    "Código Postal",
+    width=90
+)
+
+tabla.column(
+    "Correo",
+    width=130
+)
+
+tabla.column(
+    "Género",
+    width=80
+)
+
+tabla.column(
+    "Estado",
+    width=80
+)
+
+tabla.column(
+    "Tipo Usuario",
+    width=110
+)
+
+tabla.column(
+    "Comentarios",
+    width=180
+)
 
 
 tabla.pack(
@@ -1241,6 +1415,7 @@ tabla.pack(
     expand=True
 )
 
+
 scroll_vertical.config(
     command=tabla.yview
 )
@@ -1248,6 +1423,7 @@ scroll_vertical.config(
 scroll_horizontal.config(
     command=tabla.xview
 )
+
 
 tabla.bind(
     "<ButtonRelease-1>",
@@ -1271,22 +1447,27 @@ menu_principal = Menu(
     tearoff=0
 )
 
+
 menu_principal.add_command(
     label="Limpiar formulario",
     command=limpiar
 )
+
 
 menu_principal.add_command(
     label="Mostrar todos",
     command=mostrar_datos
 )
 
+
 menu_principal.add_separator()
+
 
 menu_principal.add_command(
     label="Salir",
     command=salir_programa
 )
+
 
 barra_menu.add_cascade(
     label="Menú",
@@ -1302,6 +1483,7 @@ menu_ayuda = Menu(
     barra_menu,
     tearoff=0
 )
+
 
 menu_ayuda.add_command(
     label="Acerca del sistema",
@@ -1320,6 +1502,7 @@ menu_ayuda.add_command(
     )
 )
 
+
 barra_menu.add_cascade(
     label="Ayuda",
     menu=menu_ayuda
@@ -1334,6 +1517,7 @@ barra_menu.add_command(
     label="Salir",
     command=salir_programa
 )
+
 
 raiz.config(
     menu=barra_menu
