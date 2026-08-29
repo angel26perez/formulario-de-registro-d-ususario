@@ -36,3 +36,31 @@ Limpiar: Deja todas las casillas vacías de un solo toque para que no tengas que
 Ahí ves a todos los usuarios registrados.
 
 Atajo fácil: Si le das clic a cualquier persona en la tabla, sus datos se pasan solos a las casillas de arriba. Así no tienes que estar escribiendo el ID a mano para editarlo o borrarlo.
+
+# Evidencias
+
+Ventana Principal
+ 
+<img width="532" height="392" alt="image" src="https://github.com/user-attachments/assets/81712e8b-8687-43fb-8c6a-d0e3888b7921" />
+
+<img width="1155" height="702" alt="image" src="https://github.com/user-attachments/assets/e9cdf941-f7e6-409d-a60e-031306f0ac39" />
+
+
+Creacion base de datos
+
+<img width="515" height="457" alt="image" src="https://github.com/user-attachments/assets/3eaa50a4-72c3-4c80-9b6c-f058dd8479b2" />
+
+
+
+
+
+
+
+# Estrutura del preyecto
+       ├── BaseUsuario.db       # Base de datos SQLite (se crea sola al ejecutar la app)
+
+       ├── main.py              # Código principal con la interfaz de Tkinter y lógica CRUD
+
+       ├── README.md            # Guia principal del proyecto
+
+       └── README_Preguntas.md  # Respuestas a la pregunatas del punto 13.
