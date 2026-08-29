@@ -56,6 +56,18 @@ Registro de un usuario
 <img width="580" height="471" alt="image" src="https://github.com/user-attachments/assets/8019da1c-38fa-4644-8173-3292c33142b4" />
 <img width="1121" height="564" alt="image" src="https://github.com/user-attachments/assets/efa31754-cc23-473a-9cb0-70c7dc65dea1" />
 
+Consulta de Un usuario
+
+
+Actualizacion de informacion
+
+Eliminacion
+
+validacion
+
+Tabla Treviuw
+
+seleccion de un registro
 
 
 
