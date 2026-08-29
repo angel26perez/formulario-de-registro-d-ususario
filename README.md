@@ -49,6 +49,10 @@ Ventana Principal
 Creacion base de datos
 
 <img width="515" height="457" alt="image" src="https://github.com/user-attachments/assets/3eaa50a4-72c3-4c80-9b6c-f058dd8479b2" />
+<img width="1119" height="263" alt="image" src="https://github.com/user-attachments/assets/4830e6dd-cc60-42d0-90d8-c5118dbceb32" />
+
+Registro de un usuario
+
 
 
 
