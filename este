@@ -9,14 +9,18 @@ from PIL import Image, ImageTk
 
 
 # ========================================================
-# CONFIGURACIÓN DE LA VENTANA
+# CONFIGURACIÓN
 # ========================================================
 
 raiz = Tk()
-raiz.configure(bg="#80BFFA")
 raiz.title("Sistema de Gestión de Usuarios")
 raiz.geometry("1150x700")
 raiz.resizable(False, False)
+
+# Color azul claro
+COLOR_FONDO = "#DCEEFF"
+
+raiz.configure(bg=COLOR_FONDO)
 
 try:
     raiz.iconbitmap("Escudo_Junior.ico")
@@ -29,6 +33,7 @@ except:
 # ========================================================
 
 id_seleccionado = StringVar()
+
 nombre = StringVar()
 apellido = StringVar()
 direccion = StringVar()
@@ -36,6 +41,7 @@ ciudad = StringVar()
 codigo_postal = StringVar()
 correo = StringVar()
 telefono = StringVar()
+
 genero = StringVar(value="Masculino")
 estado = IntVar()
 tipo_usuario = StringVar(value="Seleccione")
@@ -50,7 +56,7 @@ ruta_archivo = StringVar()
 
 def conexion_bbdd():
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+    conexion = sqlite3.connect("DB_SanchoPan.db")
     cursor = conexion.cursor()
 
     cursor.execute("""
@@ -72,11 +78,15 @@ def conexion_bbdd():
         )
     """)
 
-    # Verificar si la columna comentarios ya existe
     cursor.execute("PRAGMA table_info(usuarios)")
-    columnas_bbdd = [columna[1] for columna in cursor.fetchall()]
+
+    columnas_bbdd = [
+        columna[1]
+        for columna in cursor.fetchall()
+    ]
 
     if "comentarios" not in columnas_bbdd:
+
         cursor.execute(
             "ALTER TABLE usuarios ADD COLUMN comentarios TEXT"
         )
@@ -89,12 +99,453 @@ conexion_bbdd()
 
 
 # ========================================================
+# FRAME PRINCIPAL
+# ========================================================
+
+miFrame = Frame(
+    raiz,
+    bg=COLOR_FONDO,
+    bd=2,
+    relief="groove",
+    padx=10,
+    pady=10
+)
+
+miFrame.pack(
+    padx=10,
+    pady=10,
+    fill="x"
+)
+
+
+# ========================================================
+# FRAME DEL FORMULARIO
+# ========================================================
+
+frame_formulario = Frame(
+    miFrame,
+    bg=COLOR_FONDO
+)
+
+frame_formulario.pack(
+    side=LEFT,
+    padx=10,
+    pady=10
+)
+
+
+# ========================================================
+# FRAME DE LA IMAGEN - DERECHA
+# ========================================================
+
+frame_imagen = Frame(
+    miFrame,
+    bg=COLOR_FONDO,
+    width=180,
+    height=180,
+    bd=2,
+    relief="groove"
+)
+
+frame_imagen.pack(
+    side=RIGHT,
+    padx=25,
+    pady=10
+)
+
+frame_imagen.pack_propagate(False)
+
+
+# ========================================================
+# ESCUDO JUNIOR
+# ========================================================
+
+try:
+
+    imagen_escudo = Image.open(
+        "Escudo_Junior.png"
+    )
+
+    imagen_escudo.thumbnail(
+        (150, 150)
+    )
+
+    imagen_escudo_tk = ImageTk.PhotoImage(
+        imagen_escudo
+    )
+
+    etiqueta_escudo = Label(
+        frame_imagen,
+        image=imagen_escudo_tk,
+        bg=COLOR_FONDO
+    )
+
+    etiqueta_escudo.pack(
+        expand=True
+    )
+
+except Exception as error:
+
+    etiqueta_escudo = Label(
+        frame_imagen,
+        text="Escudo\nno encontrado",
+        bg=COLOR_FONDO,
+        font=("Arial", 12, "bold")
+    )
+
+    etiqueta_escudo.pack(
+        expand=True
+    )
+
+
+# ========================================================
+# TÍTULO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="FORMULARIO DE REGISTRO DE USUARIOS",
+    font=("Arial", 16, "bold"),
+    bg=COLOR_FONDO
+).grid(
+    row=0,
+    column=0,
+    columnspan=6,
+    pady=10
+)
+
+
+# ========================================================
+# NOMBRE
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Nombre:",
+    bg=COLOR_FONDO
+).grid(
+    row=1,
+    column=0,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=nombre,
+    width=25
+).grid(
+    row=1,
+    column=1,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# APELLIDO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Apellido:",
+    bg=COLOR_FONDO
+).grid(
+    row=1,
+    column=2,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=apellido,
+    width=25
+).grid(
+    row=1,
+    column=3,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# TELÉFONO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Teléfono:",
+    bg=COLOR_FONDO
+).grid(
+    row=1,
+    column=4,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=telefono,
+    width=25
+).grid(
+    row=1,
+    column=5,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# DIRECCIÓN
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Dirección:",
+    bg=COLOR_FONDO
+).grid(
+    row=2,
+    column=0,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=direccion,
+    width=25
+).grid(
+    row=2,
+    column=1,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# CIUDAD
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Ciudad:",
+    bg=COLOR_FONDO
+).grid(
+    row=2,
+    column=2,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=ciudad,
+    width=25
+).grid(
+    row=2,
+    column=3,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# CORREO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Correo:",
+    bg=COLOR_FONDO
+).grid(
+    row=2,
+    column=4,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=correo,
+    width=25
+).grid(
+    row=2,
+    column=5,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# CÓDIGO POSTAL
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Código Postal:",
+    bg=COLOR_FONDO
+).grid(
+    row=3,
+    column=0,
+    padx=5,
+    pady=5,
+    sticky="e"
+)
+
+Entry(
+    frame_formulario,
+    textvariable=codigo_postal,
+    width=25
+).grid(
+    row=3,
+    column=1,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# GÉNERO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Género:",
+    bg=COLOR_FONDO
+).grid(
+    row=3,
+    column=2,
+    padx=5,
+    pady=5
+)
+
+
+Radiobutton(
+    frame_formulario,
+    text="Masculino",
+    variable=genero,
+    value="Masculino",
+    bg=COLOR_FONDO
+).grid(
+    row=3,
+    column=3,
+    sticky="w"
+)
+
+
+Radiobutton(
+    frame_formulario,
+    text="Femenino",
+    variable=genero,
+    value="Femenino",
+    bg=COLOR_FONDO
+).grid(
+    row=4,
+    column=3,
+    sticky="w"
+)
+
+
+# ========================================================
+# COMENTARIOS
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Comentarios:",
+    bg=COLOR_FONDO
+).grid(
+    row=3,
+    column=4,
+    padx=5,
+    pady=5,
+    sticky="ne"
+)
+
+
+entrada_comentarios = Text(
+    frame_formulario,
+    width=25,
+    height=4
+)
+
+entrada_comentarios.grid(
+    row=3,
+    column=5,
+    rowspan=3,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# ESTADO
+# ========================================================
+
+Checkbutton(
+    frame_formulario,
+    text="Usuario activo",
+    variable=estado,
+    bg=COLOR_FONDO
+).grid(
+    row=5,
+    column=1,
+    pady=5
+)
+
+
+# ========================================================
+# TIPO DE USUARIO
+# ========================================================
+
+Label(
+    frame_formulario,
+    text="Tipo de usuario:",
+    bg=COLOR_FONDO
+).grid(
+    row=5,
+    column=2,
+    padx=5,
+    pady=5
+)
+
+
+combo_tipo = ttk.Combobox(
+    frame_formulario,
+    textvariable=tipo_usuario,
+    values=[
+        "Administrador",
+        "Docente",
+        "Estudiante",
+        "Invitado"
+    ],
+    state="readonly",
+    width=22
+)
+
+combo_tipo.grid(
+    row=5,
+    column=3,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
 # FUNCIÓN LIMPIAR
 # ========================================================
 
 def limpiar():
 
     id_seleccionado.set("")
+
     nombre.set("")
     apellido.set("")
     telefono.set("")
@@ -102,19 +553,24 @@ def limpiar():
     ciudad.set("")
     codigo_postal.set("")
     correo.set("")
+
     genero.set("Masculino")
     estado.set(0)
     tipo_usuario.set("Seleccione")
 
-    # CORREGIDO:
-    # El campo comentarios es un Text, por eso se limpia
-    # utilizando delete()
-    entrada_comentarios.delete("1.0", END)
+    # CORREGIDO
+    entrada_comentarios.delete(
+        "1.0",
+        END
+    )
 
     ruta_imagen.set("")
     ruta_archivo.set("")
 
-    etiqueta_imagen.config(image="")
+    etiqueta_imagen.config(
+        image=""
+    )
+
     etiqueta_imagen.image = None
 
     etiqueta_archivo.config(
@@ -123,7 +579,7 @@ def limpiar():
 
 
 # ========================================================
-# ADJUNTAR IMAGEN
+# IMAGEN DEL USUARIO
 # ========================================================
 
 def seleccionar_imagen():
@@ -131,21 +587,36 @@ def seleccionar_imagen():
     archivo = filedialog.askopenfilename(
         title="Seleccionar imagen",
         filetypes=[
-            ("Imágenes", "*.png *.jpg *.jpeg *.gif"),
-            ("Todos los archivos", "*.*")
+            (
+                "Imágenes",
+                "*.png *.jpg *.jpeg *.gif"
+            ),
+            (
+                "Todos los archivos",
+                "*.*"
+            )
         ]
     )
 
     if archivo:
 
-        ruta_imagen.set(archivo)
+        ruta_imagen.set(
+            archivo
+        )
 
         try:
 
-            imagen = Image.open(archivo)
-            imagen.thumbnail((150, 150))
+            imagen = Image.open(
+                archivo
+            )
 
-            imagen_tk = ImageTk.PhotoImage(imagen)
+            imagen.thumbnail(
+                (150, 150)
+            )
+
+            imagen_tk = ImageTk.PhotoImage(
+                imagen
+            )
 
             etiqueta_imagen.config(
                 image=imagen_tk
@@ -162,7 +633,7 @@ def seleccionar_imagen():
 
 
 # ========================================================
-# ADJUNTAR ARCHIVO
+# ARCHIVO
 # ========================================================
 
 def seleccionar_archivo():
@@ -170,16 +641,26 @@ def seleccionar_archivo():
     archivo = filedialog.askopenfilename(
         title="Seleccionar archivo",
         filetypes=[
-            ("Documentos", "*.pdf *.docx *.xlsx *.txt"),
-            ("Todos los archivos", "*.*")
+            (
+                "Documentos",
+                "*.pdf *.docx *.xlsx *.txt"
+            ),
+            (
+                "Todos los archivos",
+                "*.*"
+            )
         ]
     )
 
     if archivo:
 
-        ruta_archivo.set(archivo)
+        ruta_archivo.set(
+            archivo
+        )
 
-        nombre_archivo = os.path.basename(archivo)
+        nombre_archivo = os.path.basename(
+            archivo
+        )
 
         etiqueta_archivo.config(
             text=f"Archivo: {nombre_archivo}"
@@ -193,63 +674,80 @@ def seleccionar_archivo():
 def insertar():
 
     if nombre.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el nombre."
         )
+
         return
 
     if apellido.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el apellido."
         )
+
         return
 
     if telefono.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el teléfono."
         )
+
         return
 
     if direccion.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar la dirección."
         )
+
         return
 
     if ciudad.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar la ciudad."
         )
+
         return
 
     if codigo_postal.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el código postal."
         )
+
         return
 
     if correo.get() == "":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe ingresar el correo."
         )
+
         return
 
     if tipo_usuario.get() == "Seleccione":
+
         messagebox.showwarning(
             "Advertencia",
             "Debe seleccionar el tipo de usuario."
         )
+
         return
 
+
     # ====================================================
-    # OBTENER COMENTARIOS DEL CAMPO TEXT
+    # COMENTARIOS
     # ====================================================
 
     texto_comentarios = entrada_comentarios.get(
@@ -257,8 +755,13 @@ def insertar():
         END
     ).strip()
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+
+    conexion = sqlite3.connect(
+        "DB_SanchoPan.db"
+    )
+
     cursor = conexion.cursor()
+
 
     cursor.execute("""
         INSERT INTO usuarios
@@ -291,20 +794,22 @@ def insertar():
         estado.get(),
         tipo_usuario.get(),
 
-        # CORREGIDO
         texto_comentarios,
 
         ruta_imagen.get(),
         ruta_archivo.get()
     ))
 
+
     conexion.commit()
     conexion.close()
+
 
     messagebox.showinfo(
         "Registro",
         "Usuario registrado correctamente."
     )
+
 
     mostrar_datos()
     limpiar()
@@ -317,10 +822,18 @@ def insertar():
 def mostrar_datos():
 
     for elemento in tabla.get_children():
-        tabla.delete(elemento)
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+        tabla.delete(
+            elemento
+        )
+
+
+    conexion = sqlite3.connect(
+        "DB_SanchoPan.db"
+    )
+
     cursor = conexion.cursor()
+
 
     cursor.execute("""
         SELECT
@@ -342,9 +855,11 @@ def mostrar_datos():
         ORDER BY id DESC
     """)
 
+
     registros = cursor.fetchall()
 
     conexion.close()
+
 
     for registro in registros:
 
@@ -353,6 +868,7 @@ def mostrar_datos():
             if registro[9] == 1
             else "Inactivo"
         )
+
 
         tabla.insert(
             "",
@@ -375,7 +891,7 @@ def mostrar_datos():
 
 
 # ========================================================
-# SELECCIONAR REGISTRO DEL TREEVIEW
+# SELECCIONAR REGISTRO
 # ========================================================
 
 def seleccionar_registro(event):
@@ -385,27 +901,56 @@ def seleccionar_registro(event):
     if not seleccionado:
         return
 
+
     datos = tabla.item(
         seleccionado,
         "values"
     )
 
+
     if not datos:
         return
 
-    id_seleccionado.set(datos[0])
-    nombre.set(datos[1])
-    apellido.set(datos[2])
-    telefono.set(datos[3])
-    direccion.set(datos[4])
-    ciudad.set(datos[5])
-    codigo_postal.set(datos[6])
-    correo.set(datos[7])
-    genero.set(datos[8])
+
+    id_seleccionado.set(
+        datos[0]
+    )
+
+    nombre.set(
+        datos[1]
+    )
+
+    apellido.set(
+        datos[2]
+    )
+
+    telefono.set(
+        datos[3]
+    )
+
+    direccion.set(
+        datos[4]
+    )
+
+    ciudad.set(
+        datos[5]
+    )
+
+    codigo_postal.set(
+        datos[6]
+    )
+
+    correo.set(
+        datos[7]
+    )
+
+    genero.set(
+        datos[8]
+    )
+
 
     # ====================================================
-    # CORREGIDO:
-    # Cargar comentarios dentro del Text
+    # CARGAR COMENTARIOS
     # ====================================================
 
     entrada_comentarios.delete(
@@ -418,12 +963,20 @@ def seleccionar_registro(event):
         datos[11]
     )
 
+
     if datos[9] == "Activo":
+
         estado.set(1)
+
     else:
+
         estado.set(0)
 
-    tipo_usuario.set(datos[10])
+
+    tipo_usuario.set(
+        datos[10]
+    )
+
 
     cargar_archivos_registro(
         datos[0]
@@ -431,13 +984,19 @@ def seleccionar_registro(event):
 
 
 # ========================================================
-# CARGAR IMAGEN Y ARCHIVO DEL REGISTRO
+# CARGAR IMAGEN Y ARCHIVO
 # ========================================================
 
-def cargar_archivos_registro(id_usuario):
+def cargar_archivos_registro(
+    id_usuario
+):
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+    conexion = sqlite3.connect(
+        "DB_SanchoPan.db"
+    )
+
     cursor = conexion.cursor()
+
 
     cursor.execute(
         """
@@ -448,15 +1007,19 @@ def cargar_archivos_registro(id_usuario):
         (id_usuario,)
     )
 
+
     registro = cursor.fetchone()
 
     conexion.close()
 
+
     if not registro:
         return
 
+
     imagen = registro[0]
     archivo = registro[1]
+
 
     ruta_imagen.set(
         imagen if imagen else ""
@@ -465,6 +1028,7 @@ def cargar_archivos_registro(id_usuario):
     ruta_archivo.set(
         archivo if archivo else ""
     )
+
 
     if archivo:
 
@@ -478,14 +1042,22 @@ def cargar_archivos_registro(id_usuario):
             text="Archivo: No adjunto"
         )
 
+
     if imagen and os.path.exists(imagen):
 
         try:
 
-            img = Image.open(imagen)
-            img.thumbnail((150, 150))
+            img = Image.open(
+                imagen
+            )
 
-            img_tk = ImageTk.PhotoImage(img)
+            img.thumbnail(
+                (150, 150)
+            )
+
+            img_tk = ImageTk.PhotoImage(
+                img
+            )
 
             etiqueta_imagen.config(
                 image=img_tk
@@ -525,17 +1097,19 @@ def actualizar():
 
         return
 
-    # ====================================================
-    # OBTENER COMENTARIOS DEL TEXT
-    # ====================================================
 
     texto_comentarios = entrada_comentarios.get(
         "1.0",
         END
     ).strip()
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+
+    conexion = sqlite3.connect(
+        "DB_SanchoPan.db"
+    )
+
     cursor = conexion.cursor()
+
 
     cursor.execute("""
         UPDATE usuarios
@@ -567,21 +1141,24 @@ def actualizar():
         estado.get(),
         tipo_usuario.get(),
 
-        # CORREGIDO
         texto_comentarios,
 
         ruta_imagen.get(),
         ruta_archivo.get(),
+
         id_seleccionado.get()
     ))
 
+
     conexion.commit()
     conexion.close()
+
 
     messagebox.showinfo(
         "Actualizar",
         "Registro actualizado correctamente."
     )
+
 
     mostrar_datos()
     limpiar()
@@ -602,28 +1179,37 @@ def eliminar():
 
         return
 
+
     respuesta = messagebox.askyesno(
         "Eliminar",
         "¿Está seguro de eliminar este registro?"
     )
 
+
     if respuesta:
 
-        conexion = sqlite3.connect("BaseUsuarios.db")
+        conexion = sqlite3.connect(
+            "DB_SanchoPan.db"
+        )
+
         cursor = conexion.cursor()
+
 
         cursor.execute(
             "DELETE FROM usuarios WHERE id = ?",
             (id_seleccionado.get(),)
         )
 
+
         conexion.commit()
         conexion.close()
+
 
         messagebox.showinfo(
             "Eliminar",
             "Registro eliminado correctamente."
         )
+
 
         mostrar_datos()
         limpiar()
@@ -637,11 +1223,20 @@ def buscar():
 
     texto = entrada_buscar.get()
 
-    for elemento in tabla.get_children():
-        tabla.delete(elemento)
 
-    conexion = sqlite3.connect("BaseUsuarios.db")
+    for elemento in tabla.get_children():
+
+        tabla.delete(
+            elemento
+        )
+
+
+    conexion = sqlite3.connect(
+        "DB_SanchoPan.db"
+    )
+
     cursor = conexion.cursor()
+
 
     cursor.execute("""
         SELECT
@@ -671,9 +1266,11 @@ def buscar():
         "%" + texto + "%"
     ))
 
+
     registros = cursor.fetchall()
 
     conexion.close()
+
 
     for registro in registros:
 
@@ -682,6 +1279,7 @@ def buscar():
             if registro[9] == 1
             else "Inactivo"
         )
+
 
         tabla.insert(
             "",
@@ -704,7 +1302,7 @@ def buscar():
 
 
 # ========================================================
-# FUNCIÓN SALIR
+# SALIR
 # ========================================================
 
 def salir_programa():
@@ -714,432 +1312,19 @@ def salir_programa():
         "¿Está seguro de que desea salir del programa?"
     )
 
+
     if respuesta:
+
         raiz.destroy()
 
 
 # ========================================================
-# INTERFAZ GRÁFICA
-# ========================================================
-
-miFrame = Frame(
-    raiz,
-    bg="#BBDAF8",
-    bd=2,
-    relief="groove",
-    padx=10,
-    pady=10
-)
-
-miFrame.pack(
-    padx=10,
-    pady=10,
-    fill="x"
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="FORMULARIO DE REGISTRO DE USUARIOS",
-    font=("Arial", 16, "bold")
-).grid(
-    row=0,
-    column=0,
-    columnspan=7,
-    pady=10
-)
-
-
-# ========================================================
-# FILA 1: NOMBRE, APELLIDO Y TELÉFONO 
-# ========================================================
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Nombre:"
-).grid(
-    row=1,
-    column=0,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=nombre,
-    width=25
-).grid(
-    row=1,
-    column=1,
-    padx=5,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Apellido:"
-).grid(
-    row=1,
-    column=2,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=apellido,
-    width=25
-).grid(
-    row=1,
-    column=3,
-    padx=5,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Teléfono:"
-).grid(
-    row=1,
-    column=4,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=telefono,
-    width=25
-).grid(
-    row=1,
-    column=5,
-    padx=5,
-    pady=5
-)
-
-
-# ========================================================
-# FILA 2: DIRECCIÓN, CIUDAD Y CORREO
-# ========================================================
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Dirección:"
-).grid(
-    row=2,
-    column=0,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=direccion,
-    width=25
-).grid(
-    row=2,
-    column=1,
-    padx=5,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Ciudad:"
-).grid(
-    row=2,
-    column=2,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=ciudad,
-    width=25
-).grid(
-    row=2,
-    column=3,
-    padx=5,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Correo:"
-).grid(
-    row=2,
-    column=4,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=correo,
-    width=25
-).grid(
-    row=2,
-    column=5,
-    padx=5,
-    pady=5
-)
-
-
-# ========================================================
-# FILA 3: CÓDIGO POSTAL Y GÉNERO
-# ========================================================
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Código Postal:"
-).grid(
-    row=3,
-    column=0,
-    padx=5,
-    pady=5,
-    sticky="e"
-)
-
-Entry(
-    miFrame,
-    textvariable=codigo_postal,
-    width=25
-).grid(
-    row=3,
-    column=1,
-    padx=5,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Género:"
-).grid(
-    row=3,
-    column=2,
-    padx=5,
-    pady=5
-)
-
-
-Radiobutton(
-    miFrame,
-    bg="#BBDAF8",
-    text="Masculino",
-    variable=genero,
-    value="Masculino"
-).grid(
-    row=3,
-    column=3,
-    sticky="w"
-)
-
-
-Radiobutton(
-    miFrame,
-    bg="#BBDAF8",
-    text="Femenino",
-    variable=genero,
-    value="Femenino"
-).grid(
-    row=4,
-    column=3,
-    sticky="w"
-)
-
-
-# ========================================================
-# COMENTARIOS
-# ========================================================
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Comentarios:"
-).grid(
-    row=3,
-    column=4,
-    padx=5,
-    pady=5,
-    sticky="ne"
-)
-
-
-entrada_comentarios = Text(
-    miFrame,
-    width=25,
-    height=4
-)
-
-entrada_comentarios.grid(
-    row=3,
-    column=5,
-    rowspan=4,
-    padx=5,
-    pady=5,
-    sticky="n"
-)
-
-
-# ========================================================
-# FILA 5: ESTADO Y TIPO DE USUARIO
-# ========================================================
-
-Checkbutton(
-    miFrame,
-    bg="#BBDAF8",
-    text="Usuario activo",
-    variable=estado
-).grid(
-    row=5,
-    column=1,
-    pady=5
-)
-
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Tipo de usuario:"
-).grid(
-    row=5,
-    column=2,
-    padx=5,
-    pady=5
-)
-
-
-combo_tipo = ttk.Combobox(
-    miFrame,
-    textvariable=tipo_usuario,
-    values=[
-        "Administrador",
-        "Docente",
-        "Estudiante",
-        "Invitado"
-    ],
-    state="readonly",
-    width=22
-)
-
-combo_tipo.grid(
-    row=5,
-    column=3,
-    padx=5,
-    pady=5
-)
-
-
-# ========================================================
-# FILA 6: IMAGEN
-# ========================================================
-
-Label(
-    miFrame,
-    bg="#BBDAF8",
-    text="Imagen:"
-).grid(
-    row=6,
-    column=0,
-    padx=5,
-    pady=5
-)
-
-
-Button(
-    miFrame,
-    text="Seleccionar Imagen",
-    command=seleccionar_imagen,
-    bg="#3C92E9",
-    fg="white",
-    width=20
-).grid(
-    row=6,
-    column=1,
-    padx=5,
-    pady=5
-)
-
-
-etiqueta_imagen = Label(
-    miFrame,
-    width=20,
-    height=8,
-    relief="sunken"
-)
-
-etiqueta_imagen.grid(
-    row=6,
-    column=2,
-    rowspan=3,
-    padx=10,
-    pady=5
-)
-
-
-# ========================================================
-# FILA 7 Y 8: ARCHIVO ADJUNTO
-# ========================================================
-
-Button(
-    miFrame,
-    text="📎 Adjuntar Archivo",
-    command=seleccionar_archivo,
-    bg="#9B59B6",
-    fg="white",
-    width=20
-).grid(
-    row=7,
-    column=1,
-    padx=5,
-    pady=5
-)
-
-
-etiqueta_archivo = Label(
-    miFrame,
-    text="Archivo: No adjunto",
-    width=30,
-    anchor="w"
-)
-
-etiqueta_archivo.grid(
-    row=8,
-    column=0,
-    columnspan=2,
-    padx=5,
-    pady=5
-)
-
-
-# ========================================================
-# FRAME DE BOTONES
+# FRAME BOTONES
 # ========================================================
 
 frame_botones = Frame(
     raiz,
-    bg="#BBDAF8",
+    bg=COLOR_FONDO,
     bd=2,
     relief="groove",
     padx=10,
@@ -1229,8 +1414,8 @@ Button(
 
 frame_buscar = Frame(
     raiz,
-    bg="#BBDAF8"
-    )
+    bg=COLOR_FONDO
+)
 
 frame_buscar.pack(
     padx=10,
@@ -1241,8 +1426,8 @@ frame_buscar.pack(
 
 Label(
     frame_buscar,
-    bg="#BBDAF8",
-    text="Buscar:"
+    text="Buscar:",
+    bg=COLOR_FONDO
 ).pack(
     side=LEFT,
     padx=5
@@ -1287,12 +1472,12 @@ Button(
 
 
 # ========================================================
-# FRAME DEL TREEVIEW
+# FRAME TREEVIEW
 # ========================================================
 
 frame_tabla = Frame(
     raiz,
-    bg="#80BFFA",
+    bg=COLOR_FONDO,
     bd=2,
     relief="groove"
 )
@@ -1328,7 +1513,7 @@ scroll_horizontal.pack(
 
 
 # ========================================================
-# COLUMNAS DEL TREEVIEW
+# TREEVIEW
 # ========================================================
 
 columnas = (
@@ -1455,15 +1640,85 @@ tabla.bind(
 
 
 # ========================================================
-# BARRA DE MENÚ
+# ETIQUETA PARA IMAGEN DEL USUARIO
 # ========================================================
 
-barra_menu = Menu(raiz)
+etiqueta_imagen = Label(
+    frame_formulario,
+    bg=COLOR_FONDO,
+    width=20,
+    height=8,
+    relief="sunken"
+)
+
+# Esta es la imagen que se selecciona para cada usuario.
+# Está en una posición independiente del escudo.
 
 
 # ========================================================
-# MENÚ PRINCIPAL
+# ETIQUETA ARCHIVO
 # ========================================================
+
+etiqueta_archivo = Label(
+    frame_formulario,
+    text="Archivo: No adjunto",
+    bg=COLOR_FONDO,
+    width=30,
+    anchor="w"
+)
+
+
+# ========================================================
+# BOTONES DE IMAGEN Y ARCHIVO
+# ========================================================
+
+Button(
+    frame_formulario,
+    text="Seleccionar Imagen",
+    command=seleccionar_imagen,
+    bg="#3498DB",
+    fg="white",
+    width=20
+).grid(
+    row=6,
+    column=1,
+    padx=5,
+    pady=5
+)
+
+
+Button(
+    frame_formulario,
+    text="📎 Adjuntar Archivo",
+    command=seleccionar_archivo,
+    bg="#9B59B6",
+    fg="white",
+    width=20
+).grid(
+    row=7,
+    column=1,
+    padx=5,
+    pady=5
+)
+
+
+etiqueta_archivo.grid(
+    row=8,
+    column=0,
+    columnspan=2,
+    padx=5,
+    pady=5
+)
+
+
+# ========================================================
+# MENÚ
+# ========================================================
+
+barra_menu = Menu(
+    raiz
+)
+
 
 menu_principal = Menu(
     barra_menu,
@@ -1499,7 +1754,7 @@ barra_menu.add_cascade(
 
 
 # ========================================================
-# MENÚ AYUDA
+# AYUDA
 # ========================================================
 
 menu_ayuda = Menu(
@@ -1532,10 +1787,6 @@ barra_menu.add_cascade(
 )
 
 
-# ========================================================
-# MENÚ SALIR
-# ========================================================
-
 barra_menu.add_command(
     label="Salir",
     command=salir_programa
@@ -1548,9 +1799,14 @@ raiz.config(
 
 
 # ========================================================
-# CARGAR DATOS Y EJECUTAR
+# MOSTRAR DATOS INICIALES
 # ========================================================
 
 mostrar_datos()
+
+
+# ========================================================
+# EJECUTAR
+# ========================================================
 
 raiz.mainloop()
