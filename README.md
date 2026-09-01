@@ -97,6 +97,10 @@ funcion en funcionamiento
 
 <img width="487" height="101" alt="image" src="https://github.com/user-attachments/assets/1a56e64a-6b70-41e6-8280-f4dffc6983da" />
 
+En pantalla
+
+<img width="896" height="518" alt="image" src="https://github.com/user-attachments/assets/030ae50a-6f9b-4ea1-bb13-3f7c488ea150" />
+
 
 # codigo fuente en funcionamiento
 
