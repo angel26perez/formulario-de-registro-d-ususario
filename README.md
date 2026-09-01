@@ -88,7 +88,9 @@ Validacion con los .get
 <img width="565" height="255" alt="image" src="https://github.com/user-attachments/assets/e761c186-880b-40df-a0ed-c64e860a7def" />
 
 <img width="520" height="644" alt="image" src="https://github.com/user-attachments/assets/bd9aa68f-8205-4376-a2d1-3ce63b8df948" />
+
 # seleccion de un registro
+
 creacion de la funcion de seleeccion
 
 <img width="464" height="370" alt="image" src="https://github.com/user-attachments/assets/91d9d0a2-57da-4828-93e5-fb8117c6994f" />
