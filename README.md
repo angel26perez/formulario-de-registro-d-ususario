@@ -116,4 +116,4 @@ En pantalla
 
        ├── README.md            # Guia principal del proyecto
 
-       └── README_Preguntas.md  # Respuestas a la pregunatas del punto 13.
+       └── Preguntas.md  # Respuestas a la pregunatas del punto 13.
