@@ -110,7 +110,7 @@ En pantalla
 
 
 # Estrutura del preyecto
-       ├── BaseUsuario.db       # Base de datos SQLite (se crea sola al ejecutar la app)
+       ├── DB_SanchoPan.db       # Base de datos SQLite (se crea sola al ejecutar la app)
 
        ├── main.py              # Código principal con la interfaz de Tkinter y lógica CRUD
 
