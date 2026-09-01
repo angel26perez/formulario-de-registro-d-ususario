@@ -78,8 +78,10 @@ Validacion con los .get
 <img width="185" height="374" alt="image" src="https://github.com/user-attachments/assets/29c6e02d-9ad7-4bd2-ad46-2d362d0a4848" />
 
 
-Tabla Treviuw
-
+#Tabla Treviuw
+<img width="919" height="205" alt="image" src="https://github.com/user-attachments/assets/d8ea0528-4145-4e86-9dac-f51bf5804bc9" />
+<img width="565" height="255" alt="image" src="https://github.com/user-attachments/assets/e761c186-880b-40df-a0ed-c64e860a7def" />
+<img width="520" height="644" alt="image" src="https://github.com/user-attachments/assets/bd9aa68f-8205-4376-a2d1-3ce63b8df948" />
 seleccion de un registro
 
 
