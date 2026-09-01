@@ -49,16 +49,20 @@ Atajo fácil: Si le das clic a cualquier persona en la tabla, sus datos se pasan
 # Creacion base de datos
 
 <img width="515" height="457" alt="image" src="https://github.com/user-attachments/assets/3eaa50a4-72c3-4c80-9b6c-f058dd8479b2" />
+
 <img width="1119" height="263" alt="image" src="https://github.com/user-attachments/assets/4830e6dd-cc60-42d0-90d8-c5118dbceb32" />
 
 # Registro de un usuario
 
 <img width="580" height="471" alt="image" src="https://github.com/user-attachments/assets/8019da1c-38fa-4644-8173-3292c33142b4" />
+
 <img width="1121" height="564" alt="image" src="https://github.com/user-attachments/assets/efa31754-cc23-473a-9cb0-70c7dc65dea1" />
 
 # Consulta de Un usuario
 <img width="642" height="617" alt="image" src="https://github.com/user-attachments/assets/42cac2b1-f45a-42a2-8cc6-02149197fb17" />
+
 <img width="531" height="606" alt="image" src="https://github.com/user-attachments/assets/d9ec76df-4c50-4926-aa28-f800027a557b" />
+
 <img width="1113" height="110" alt="image" src="https://github.com/user-attachments/assets/7ca6afa7-cd25-4f94-b6c5-2ca2b09d49ae" />
 
 # Actualizacion de informacion
@@ -78,13 +82,20 @@ Validacion con los .get
 <img width="185" height="374" alt="image" src="https://github.com/user-attachments/assets/29c6e02d-9ad7-4bd2-ad46-2d362d0a4848" />
 
 
-#Tabla Treviuw
+# Tabla Treeview
 <img width="919" height="205" alt="image" src="https://github.com/user-attachments/assets/d8ea0528-4145-4e86-9dac-f51bf5804bc9" />
 
 <img width="565" height="255" alt="image" src="https://github.com/user-attachments/assets/e761c186-880b-40df-a0ed-c64e860a7def" />
 
 <img width="520" height="644" alt="image" src="https://github.com/user-attachments/assets/bd9aa68f-8205-4376-a2d1-3ce63b8df948" />
-seleccion de un registro
+# seleccion de un registro
+creacion de la funcion de seleeccion
+
+<img width="464" height="370" alt="image" src="https://github.com/user-attachments/assets/91d9d0a2-57da-4828-93e5-fb8117c6994f" />
+
+funcion en funcionamiento
+
+<img width="487" height="101" alt="image" src="https://github.com/user-attachments/assets/1a56e64a-6b70-41e6-8280-f4dffc6983da" />
 
 
 codigo fuente en funcionamiento
