@@ -76,7 +76,7 @@ Atajo fácil: Si le das clic a cualquier persona en la tabla, sus datos se pasan
 <img width="597" height="189" alt="image" src="https://github.com/user-attachments/assets/42573ef2-f86b-4378-bbb3-c10073e80420" />
 
 
-#Validacion 
+# Validacion 
 Validacion con los .get
 
 <img width="185" height="374" alt="image" src="https://github.com/user-attachments/assets/29c6e02d-9ad7-4bd2-ad46-2d362d0a4848" />
@@ -98,11 +98,9 @@ funcion en funcionamiento
 <img width="487" height="101" alt="image" src="https://github.com/user-attachments/assets/1a56e64a-6b70-41e6-8280-f4dffc6983da" />
 
 
-codigo fuente en funcionamiento
+# codigo fuente en funcionamiento
 
-
-
-
+<img width="948" height="667" alt="image" src="https://github.com/user-attachments/assets/12940c3c-fe3a-4f49-a39f-d88852378f3f" />
 
 
 # Estrutura del preyecto
