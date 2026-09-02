@@ -1651,6 +1651,13 @@ etiqueta_imagen = Label(
     relief="sunken"
 )
 
+etiqueta_imagen.grid(
+    row=6,
+    column=2,
+    rowspan=2,   
+    pady=5,
+    sticky="w"  
+
 # Esta es la imagen que se selecciona para cada usuario.
 # Está en una posición independiente del escudo.
 
