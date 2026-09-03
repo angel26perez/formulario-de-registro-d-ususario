@@ -610,9 +610,7 @@ def seleccionar_imagen():
                 archivo
             )
 
-            imagen.thumbnail(
-                (150, 150)
-            )
+            imagen = imagen.resize((150, 150))
 
             imagen_tk = ImageTk.PhotoImage(
                 imagen
@@ -1657,7 +1655,7 @@ etiqueta_imagen.grid(
     rowspan=2,   
     pady=5,
     sticky="w"  
-
+)
 # Esta es la imagen que se selecciona para cada usuario.
 # Está en una posición independiente del escudo.
 
