@@ -1,0 +1,2424 @@
+
+
+"""
+Sistema de Gestión de Biblioteca
+Aplicación CRUD con Tkinter y MySQL
+"""
+
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+import mysql.connector
+from mysql.connector import Error
+
+from typing import Optional, List, Tuple, Dict
+from dataclasses import dataclass
+import logging
+
+
+
+
+# ============================================================
+# CONFIGURACIÓN DE LOG
+# ============================================================
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+
+
+# ============================================================
+# CONFIGURACIÓN DE BASE DE DATOS
+# ============================================================
+
+
+@dataclass
+class DBConfig:
+    host: str = "localhost"
+    user: str = "root"
+    password: str = ""
+    database: str = "biblioteca_db"
+
+
+
+
+# ============================================================
+# GESTOR DE BASE DE DATOS
+# ============================================================
+
+
+class DatabaseManager:
+
+
+    def __init__(self, config: DBConfig):
+        self.config = config
+        self.connection: Optional[mysql.connector.MySQLConnection] = None
+
+
+    def connect(self) -> bool:
+        """Conectar a MySQL."""
+        try:
+            self.connection = mysql.connector.connect(
+                host=self.config.host,
+                user=self.config.user,
+                password=self.config.password,
+                database=self.config.database
+            )
+
+
+            logger.info("Conexión a BD establecida")
+            return True
+
+
+        except Error as e:
+            logger.error(f"Error de conexión: {e}")
+            return False
+
+
+    def disconnect(self):
+        """Cerrar conexión."""
+        if self.connection and self.connection.is_connected():
+            self.connection.close()
+            logger.info("Conexión cerrada")
+
+
+    def is_connected(self) -> bool:
+        """Comprobar conexión."""
+        return bool(
+            self.connection and
+            self.connection.is_connected()
+        )
+
+
+    def execute_query(
+        self,
+        query: str,
+        params: Tuple = None
+    ) -> List[Tuple]:
+        """Ejecutar SELECT."""
+
+
+        if not self.is_connected():
+            raise Error("No existe conexión con la base de datos")
+
+
+        cursor = None
+
+
+        try:
+            cursor = self.connection.cursor()
+
+
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+
+
+            result = cursor.fetchall()
+
+
+            return result
+
+
+        except Error as e:
+            logger.error(f"Error en consulta: {e}")
+            raise
+
+
+        finally:
+            if cursor:
+                cursor.close()
+
+
+    def execute_update(
+        self,
+        query: str,
+        params: Tuple = None
+    ) -> bool:
+        """Ejecutar INSERT, UPDATE o DELETE."""
+
+
+        if not self.is_connected():
+            raise Error("No existe conexión con la base de datos")
+
+
+        cursor = None
+
+
+        try:
+            cursor = self.connection.cursor()
+
+
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+
+
+            self.connection.commit()
+
+
+            return True
+
+
+        except Error as e:
+
+
+            if self.connection:
+                self.connection.rollback()
+
+
+            logger.error(f"Error en actualización: {e}")
+
+
+            raise
+
+
+        finally:
+            if cursor:
+                cursor.close()
+
+
+    def get_columns(self, table: str) -> List[str]:
+        """Obtener columnas de una tabla."""
+
+
+        try:
+            result = self.execute_query(
+                f"DESCRIBE {table}"
+            )
+
+
+            return [column[0] for column in result]
+
+
+        except Error as e:
+            logger.error(
+                f"Error obteniendo columnas: {e}"
+            )
+
+
+            return []
+
+
+
+
+# ============================================================
+# APLICACIÓN
+# ============================================================
+
+
+class BibliotecaApp:
+
+
+    COLORS = {
+
+
+        "bg_dark": "#1e1e1e",
+
+
+        "bg_light": "#2d2d2d",
+
+
+        "bg_lighter": "#3d3d3d",
+
+
+        "sidebar": "#252525",
+
+
+        "sidebar_hover": "#3a3a3a",
+
+
+        "accent": "#00a8ff",
+
+
+        "accent_hover": "#0088cc",
+
+
+        "text": "#ffffff",
+
+
+        "text_muted": "#a0a0a0",
+
+
+        "success": "#00cc66",
+
+
+        "error": "#ff3333",
+
+
+        "warning": "#ff9900",
+
+
+        "card_blue": "#164e63",
+
+
+        "card_green": "#14532d",
+
+
+        "card_orange": "#78350f",
+
+
+        "card_red": "#7f1d1d",
+
+
+        "card_purple": "#4c1d95"
+    }
+
+
+    # ========================================================
+    # TABLAS
+    # ========================================================
+
+
+    TABLES = [
+
+
+        ("👤  Usuarios", "usuarios"),
+
+
+        ("✍️  Autores", "autores"),
+
+
+        ("📖  Libros", "libros"),
+
+
+        ("🏷️  Categorías", "categoria"),
+
+
+        ("🏢  Editoriales", "editoriales"),
+
+
+        ("📤  Préstamos", "prestamos"),
+
+
+        ("📋  Detalles", "detalle_prestamo")
+    ]
+
+
+    # ========================================================
+    # CONSTRUCTOR
+    # ========================================================
+
+
+    def __init__(
+        self,
+        root: tk.Tk,
+        db_config: DBConfig
+    ):
+
+
+        self.root = root
+
+
+        self.root.title(
+            "Sistema de Gestión - Biblioteca"
+        )
+
+
+        self.root.geometry(
+            "1400x800"
+        )
+
+
+        self.root.minsize(
+            1100,
+            650
+        )
+
+
+        self.root.configure(
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        # Base de datos
+        self.db = DatabaseManager(
+            db_config
+        )
+
+
+        # Estado
+        self.current_table: Optional[str] = None
+
+
+        self.current_data: List[Tuple] = []
+
+
+        self.current_columns: List[str] = []
+
+
+        self.tree = None
+
+
+        self.status_var = tk.StringVar(
+            value="Conectando..."
+        )
+
+
+        # Crear interfaz
+        self._setup_ui()
+
+
+        # Conectar BD
+        self._connect_database()
+
+
+        # Cerrar correctamente
+        self.root.protocol(
+            "WM_DELETE_WINDOW",
+            self._on_closing
+        )
+
+
+    # ========================================================
+    # INTERFAZ PRINCIPAL
+    # ========================================================
+
+
+    def _setup_ui(self):
+
+
+        # Contenedor principal
+        main_container = tk.Frame(
+            self.root,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        main_container.pack(
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        # ----------------------------------------------------
+        # BARRA LATERAL
+        # ----------------------------------------------------
+
+
+        self.sidebar = tk.Frame(
+            main_container,
+            bg=self.COLORS["sidebar"],
+            width=230
+        )
+
+
+        self.sidebar.pack(
+            side=tk.LEFT,
+            fill=tk.Y
+        )
+
+
+        self.sidebar.pack_propagate(False)
+
+
+        self._setup_sidebar()
+
+
+        # ----------------------------------------------------
+        # ÁREA DERECHA
+        # ----------------------------------------------------
+
+
+        right_area = tk.Frame(
+            main_container,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        right_area.pack(
+            side=tk.LEFT,
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        # Encabezado
+        self.header = tk.Frame(
+            right_area,
+            bg=self.COLORS["bg_light"],
+            height=70
+        )
+
+
+        self.header.pack(
+            fill=tk.X
+        )
+
+
+        self.header.pack_propagate(False)
+
+
+        self.header_title = tk.Label(
+            self.header,
+            text="📚 Resumen de la Biblioteca",
+            font=("Segoe UI", 20, "bold"),
+            bg=self.COLORS["bg_light"],
+            fg=self.COLORS["accent"]
+        )
+
+
+        self.header_title.pack(
+            side=tk.LEFT,
+            padx=25
+        )
+
+
+        # Área de contenido
+        self.content = tk.Frame(
+            right_area,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        self.content.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=15,
+            pady=15
+        )
+
+
+        # Barra de estado
+        self._setup_statusbar(
+            right_area
+        )
+
+
+        # Mostrar inicio
+        self._show_dashboard()
+
+
+    # ========================================================
+    # BARRA LATERAL
+    # ========================================================
+
+
+    def _setup_sidebar(self):
+
+
+        # Título
+        logo = tk.Label(
+            self.sidebar,
+            text="📚 BIBLIOTECA",
+            font=("Segoe UI", 17, "bold"),
+            bg=self.COLORS["sidebar"],
+            fg=self.COLORS["accent"]
+        )
+
+
+        logo.pack(
+            pady=(25, 5)
+        )
+
+
+        subtitle = tk.Label(
+            self.sidebar,
+            text="Sistema de gestión",
+            font=("Segoe UI", 9),
+            bg=self.COLORS["sidebar"],
+            fg=self.COLORS["text_muted"]
+        )
+
+
+        subtitle.pack(
+            pady=(0, 25)
+        )
+
+
+        # Línea
+        separator = tk.Frame(
+            self.sidebar,
+            bg=self.COLORS["accent"],
+            height=2
+        )
+
+
+        separator.pack(
+            fill=tk.X,
+            padx=15,
+            pady=(0, 15)
+        )
+
+
+        # Botón Inicio
+        self._create_sidebar_button(
+            "🏠   Inicio",
+            self._show_dashboard
+        )
+
+
+        # Separador
+        tk.Label(
+            self.sidebar,
+            text="GESTIÓN",
+            font=("Segoe UI", 8, "bold"),
+            bg=self.COLORS["sidebar"],
+            fg=self.COLORS["text_muted"]
+        ).pack(
+            anchor="w",
+            padx=20,
+            pady=(20, 8)
+        )
+
+
+        # Botones de tablas
+        for label, table in self.TABLES:
+
+
+            self._create_sidebar_button(
+                label,
+                lambda t=table: self._load_table(t)
+            )
+
+
+        # Espacio
+        spacer = tk.Frame(
+            self.sidebar,
+            bg=self.COLORS["sidebar"]
+        )
+
+
+        spacer.pack(
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        # Información inferior
+        version = tk.Label(
+            self.sidebar,
+            text="Sistema de Biblioteca\nMySQL + Python",
+            font=("Segoe UI", 8),
+            bg=self.COLORS["sidebar"],
+            fg=self.COLORS["text_muted"],
+            justify=tk.CENTER
+        )
+
+
+        version.pack(
+            pady=20
+        )
+
+
+    def _create_sidebar_button(
+        self,
+        text,
+        command
+    ):
+
+
+        button = tk.Button(
+            self.sidebar,
+            text=text,
+            command=command,
+            font=("Segoe UI", 10, "bold"),
+            bg=self.COLORS["sidebar"],
+            fg=self.COLORS["text"],
+            activebackground=self.COLORS["sidebar_hover"],
+            activeforeground=self.COLORS["accent"],
+            relief=tk.FLAT,
+            bd=0,
+            anchor="w",
+            padx=20,
+            pady=10,
+            cursor="hand2"
+        )
+
+
+        button.pack(
+            fill=tk.X,
+            padx=8,
+            pady=2
+        )
+
+
+        # Efecto al pasar el mouse
+        button.bind(
+            "<Enter>",
+            lambda e: button.config(
+                bg=self.COLORS["sidebar_hover"]
+            )
+        )
+
+
+        button.bind(
+            "<Leave>",
+            lambda e: button.config(
+                bg=self.COLORS["sidebar"]
+            )
+        )
+
+
+    # ========================================================
+    # BARRA DE ESTADO
+    # ========================================================
+
+
+    def _setup_statusbar(self, parent):
+
+
+        status = tk.Label(
+            parent,
+            textvariable=self.status_var,
+            bg=self.COLORS["bg_light"],
+            fg=self.COLORS["text_muted"],
+            font=("Segoe UI", 9),
+            anchor=tk.W,
+            padx=15,
+            pady=5
+        )
+
+
+        status.pack(
+            fill=tk.X
+        )
+
+
+    def _update_status(
+        self,
+        message: str,
+        status_type: str = "info"
+    ):
+
+
+        icon = {
+
+
+            "info": "ℹ️",
+
+
+            "success": "✓",
+
+
+            "error": "✗",
+
+
+            "warning": "⚠️"
+
+
+        }.get(
+            status_type,
+            "•"
+        )
+
+
+        self.status_var.set(
+            f"{icon} {message}"
+        )
+
+
+    # ========================================================
+    # CONEXIÓN
+    # ========================================================
+
+
+    def _connect_database(self):
+
+
+        if self.db.connect():
+
+
+            self._update_status(
+                "Conectado a la base de datos",
+                "success"
+            )
+
+
+            # Actualizar dashboard
+            self._show_dashboard()
+
+
+        else:
+
+
+            self._update_status(
+                "No se pudo conectar a la BD",
+                "error"
+            )
+
+
+            messagebox.showerror(
+                "Error de conexión",
+                "No se pudo conectar a la base de datos.\n\n"
+                "Verifica que:\n"
+                "• MySQL/MariaDB esté corriendo\n"
+                "• Las credenciales sean correctas\n"
+                "• La BD 'biblioteca_db' exista"
+            )
+
+
+    # ========================================================
+    # DASHBOARD
+    # ========================================================
+
+
+    def _show_dashboard(self):
+
+
+        # Limpiar contenido
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+
+        self.current_table = None
+
+
+        self.header_title.config(
+            text="📚 Resumen de la Biblioteca"
+        )
+
+
+        # ----------------------------------------------------
+        # TÍTULO
+        # ----------------------------------------------------
+
+
+        title = tk.Label(
+            self.content,
+            text="Resumen del inventario",
+            font=("Segoe UI", 18, "bold"),
+            bg=self.COLORS["bg_dark"],
+            fg=self.COLORS["text"]
+        )
+
+
+        title.pack(
+            anchor="w",
+            pady=(5, 5)
+        )
+
+
+        description = tk.Label(
+            self.content,
+            text="Información general de la biblioteca",
+            font=("Segoe UI", 10),
+            bg=self.COLORS["bg_dark"],
+            fg=self.COLORS["text_muted"]
+        )
+
+
+        description.pack(
+            anchor="w",
+            pady=(0, 20)
+        )
+
+
+        # Obtener estadísticas
+        stats = self._get_dashboard_stats()
+
+
+        # ----------------------------------------------------
+        # TARJETAS
+        # ----------------------------------------------------
+
+
+        cards_frame = tk.Frame(
+            self.content,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        cards_frame.pack(
+            fill=tk.X
+        )
+
+
+        cards = [
+
+
+            (
+                "👤",
+                "Usuarios",
+                stats["usuarios"],
+                self.COLORS["card_blue"]
+            ),
+
+
+            (
+                "📖",
+                "Total de libros",
+                stats["libros"],
+                self.COLORS["card_green"]
+            ),
+
+
+            (
+                "✍️",
+                "Autores",
+                stats["autores"],
+                self.COLORS["card_purple"]
+            ),
+
+
+            (
+                "📤",
+                "Préstamos",
+                stats["prestamos"],
+                self.COLORS["card_orange"]
+            )
+
+
+        ]
+
+
+        for index, card in enumerate(cards):
+
+
+            self._create_card(
+                cards_frame,
+                card,
+                index
+            )
+
+
+        # ----------------------------------------------------
+        # SEGUNDA FILA
+        # ----------------------------------------------------
+
+
+        second_frame = tk.Frame(
+            self.content,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        second_frame.pack(
+            fill=tk.X,
+            pady=(15, 0)
+        )
+
+
+        second_cards = [
+
+
+            (
+                "📕",
+                "Libros prestados",
+                stats["prestados"],
+                self.COLORS["card_red"]
+            ),
+
+
+            (
+                "📗",
+                "Libros disponibles",
+                stats["disponibles"],
+                self.COLORS["card_green"]
+            ),
+
+
+            (
+                "✅",
+                "Préstamos devueltos",
+                stats["devueltos"],
+                self.COLORS["card_blue"]
+            ),
+
+
+            (
+                "⚠️",
+                "Préstamos atrasados",
+                stats["atrasados"],
+                self.COLORS["card_orange"]
+            )
+
+
+        ]
+
+
+        for index, card in enumerate(second_cards):
+
+
+            self._create_card(
+                second_frame,
+                card,
+                index
+            )
+
+
+        # ----------------------------------------------------
+        # INFORMACIÓN
+        # ----------------------------------------------------
+
+
+        info_frame = tk.LabelFrame(
+            self.content,
+            text="Información general",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.COLORS["bg_light"],
+            fg=self.COLORS["accent"],
+            padx=20,
+            pady=15
+        )
+
+
+        info_frame.pack(
+            fill=tk.BOTH,
+            expand=True,
+            pady=(20, 0)
+        )
+
+
+        info_text = (
+
+
+            f"📚 Total de libros registrados: "
+            f"{stats['libros']}\n\n"
+
+
+            f"📕 Libros actualmente prestados: "
+            f"{stats['prestados']}\n\n"
+
+
+            f"📗 Libros disponibles: "
+            f"{stats['disponibles']}\n\n"
+
+
+            f"👤 Usuarios registrados: "
+            f"{stats['usuarios']}\n\n"
+
+
+            f"✍️ Autores registrados: "
+            f"{stats['autores']}\n\n"
+
+
+            f"📤 Total de préstamos registrados: "
+            f"{stats['prestamos']}\n\n"
+
+
+            f"✅ Préstamos devueltos: "
+            f"{stats['devueltos']}\n\n"
+
+
+            f"⚠️ Préstamos atrasados: "
+            f"{stats['atrasados']}"
+        )
+
+
+        info_label = tk.Label(
+            info_frame,
+            text=info_text,
+            font=("Segoe UI", 11),
+            bg=self.COLORS["bg_light"],
+            fg=self.COLORS["text"],
+            justify=tk.LEFT,
+            anchor="nw"
+        )
+
+
+        info_label.pack(
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        self._update_status(
+            "Resumen de inventario actualizado",
+            "success"
+        )
+
+
+    # ========================================================
+    # OBTENER ESTADÍSTICAS
+    # ========================================================
+
+
+    def _get_dashboard_stats(self):
+
+
+        stats = {
+
+
+            "usuarios": 0,
+
+
+            "libros": 0,
+
+
+            "autores": 0,
+
+
+            "prestamos": 0,
+
+
+            "prestados": 0,
+
+
+            "disponibles": 0,
+
+
+            "devueltos": 0,
+
+
+            "atrasados": 0
+        }
+
+
+        if not self.db.is_connected():
+            return stats
+
+
+        try:
+
+
+            # ================================================
+            # CONSULTAS PRINCIPALES
+            # ================================================
+
+
+            result = self.db.execute_query(
+                "SELECT COUNT(*) FROM usuarios"
+            )
+
+
+            stats["usuarios"] = result[0][0]
+
+
+            result = self.db.execute_query(
+                "SELECT COUNT(*) FROM libros"
+            )
+
+
+            stats["libros"] = result[0][0]
+
+
+            result = self.db.execute_query(
+                "SELECT COUNT(*) FROM autores"
+            )
+
+
+            stats["autores"] = result[0][0]
+
+
+            result = self.db.execute_query(
+                "SELECT COUNT(*) FROM prestamos"
+            )
+
+
+            stats["prestamos"] = result[0][0]
+
+
+            # ================================================
+            # PRÉSTAMOS ACTIVOS
+            # ================================================
+
+
+            result = self.db.execute_query(
+                """
+                SELECT COUNT(*)
+                FROM detalle_prestamo dp
+                INNER JOIN prestamos p
+                    ON dp.id_prestamo = p.id_prestamo
+                WHERE p.estado IN ('PRESTADO', 'ATRASADO')
+                """
+            )
+
+
+            stats["prestados"] = result[0][0]
+
+
+            # ================================================
+            # LIBROS DISPONIBLES
+            # ================================================
+
+
+            stats["disponibles"] = (
+                stats["libros"] -
+                stats["prestados"]
+            )
+
+
+            if stats["disponibles"] < 0:
+                stats["disponibles"] = 0
+
+
+            # ================================================
+            # DEVUELTOS
+            # ================================================
+
+
+            result = self.db.execute_query(
+                """
+                SELECT COUNT(*)
+                FROM prestamos
+                WHERE estado = 'DEVUELTO'
+                """
+            )
+
+
+            stats["devueltos"] = result[0][0]
+
+
+            # ================================================
+            # ATRASADOS
+            # ================================================
+
+
+            result = self.db.execute_query(
+                """
+                SELECT COUNT(*)
+                FROM prestamos
+                WHERE estado = 'ATRASADO'
+                """
+            )
+
+
+            stats["atrasados"] = result[0][0]
+
+
+        except Error as e:
+
+
+            logger.error(
+                f"Error obteniendo estadísticas: {e}"
+            )
+
+
+        return stats
+
+
+    # ========================================================
+    # CREAR TARJETA
+    # ========================================================
+
+
+    def _create_card(
+        self,
+        parent,
+        data,
+        index
+    ):
+
+
+        icon, title, value, color = data
+
+
+        card = tk.Frame(
+            parent,
+            bg=color,
+            height=130
+        )
+
+
+        card.pack(
+            side=tk.LEFT,
+            fill=tk.BOTH,
+            expand=True,
+            padx=5
+        )
+
+
+        card.pack_propagate(False)
+
+
+        # Icono
+        icon_label = tk.Label(
+            card,
+            text=icon,
+            font=("Segoe UI Emoji", 28),
+            bg=color,
+            fg=self.COLORS["text"]
+        )
+
+
+        icon_label.pack(
+            anchor="w",
+            padx=15,
+            pady=(12, 0)
+        )
+
+
+        # Título
+        title_label = tk.Label(
+            card,
+            text=title,
+            font=("Segoe UI", 9, "bold"),
+            bg=color,
+            fg=self.COLORS["text"]
+        )
+
+
+        title_label.pack(
+            anchor="w",
+            padx=15
+        )
+
+
+        # Número
+        value_label = tk.Label(
+            card,
+            text=str(value),
+            font=("Segoe UI", 22, "bold"),
+            bg=color,
+            fg=self.COLORS["text"]
+        )
+
+
+        value_label.pack(
+            anchor="w",
+            padx=15
+        )
+
+
+    # ========================================================
+    # CARGAR TABLA
+    # ========================================================
+
+
+    def _load_table(
+        self,
+        table_name: str
+    ):
+
+
+        if not self.db.is_connected():
+
+
+            messagebox.showerror(
+                "Error",
+                "No hay conexión a la base de datos"
+            )
+
+
+            return
+
+
+        try:
+
+
+            self.current_table = table_name
+
+
+            # Obtener columnas
+            self.current_columns = (
+                self.db.get_columns(
+                    table_name
+                )
+            )
+
+
+            # Obtener datos
+            self.current_data = (
+                self.db.execute_query(
+                    f"SELECT * FROM {table_name}"
+                )
+            )
+
+
+            # Limpiar contenido
+            for widget in self.content.winfo_children():
+                widget.destroy()
+
+
+            # Título
+            table_titles = {
+
+
+                "usuarios": "👤 Usuarios",
+
+
+                "autores": "✍️ Autores",
+
+
+                "libros": "📖 Libros",
+
+
+                "categoria": "🏷️ Categorías",
+
+
+                "editoriales": "🏢 Editoriales",
+
+
+                "prestamos": "📤 Préstamos",
+
+
+                "detalle_prestamo": "📋 Detalles de préstamos"
+            }
+
+
+            self.header_title.config(
+                text=table_titles.get(
+                    table_name,
+                    table_name
+                )
+            )
+
+
+            # ------------------------------------------------
+            # MARCO DE TABLA
+            # ------------------------------------------------
+
+
+            table_frame = tk.LabelFrame(
+                self.content,
+                text=table_titles.get(
+                    table_name,
+                    "Datos"
+                ),
+                font=("Segoe UI", 11, "bold"),
+                bg=self.COLORS["bg_light"],
+                fg=self.COLORS["accent"],
+                padx=10,
+                pady=10
+            )
+
+
+            table_frame.pack(
+                fill=tk.BOTH,
+                expand=True,
+                pady=(0, 10)
+            )
+
+
+            # Treeview
+            self._setup_treeview(
+                table_frame
+            )
+
+
+            # ------------------------------------------------
+            # BOTONES CRUD
+            # ------------------------------------------------
+
+
+            form_frame = tk.LabelFrame(
+                self.content,
+                text="Operaciones CRUD",
+                font=("Segoe UI", 11, "bold"),
+                bg=self.COLORS["bg_light"],
+                fg=self.COLORS["accent"],
+                padx=15,
+                pady=12
+            )
+
+
+            form_frame.pack(
+                fill=tk.X
+            )
+
+
+            self._setup_crud_buttons(
+                form_frame
+            )
+
+
+            # Actualizar
+            self._fill_treeview()
+
+
+            self._update_status(
+                f"Tabla '{table_name}' cargada - "
+                f"{len(self.current_data)} registros",
+                "success"
+            )
+
+
+        except Error as e:
+
+
+            self._update_status(
+                f"Error al cargar tabla: {str(e)}",
+                "error"
+            )
+
+
+            messagebox.showerror(
+                "Error",
+                f"Error al cargar tabla:\n{e}"
+            )
+
+
+    # ========================================================
+    # TREEVIEW
+    # ========================================================
+
+
+    def _setup_treeview(
+        self,
+        parent
+    ):
+
+
+        tree_frame = tk.Frame(
+            parent,
+            bg=self.COLORS["bg_light"]
+        )
+
+
+        tree_frame.pack(
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        self.tree = ttk.Treeview(
+            tree_frame,
+            show="headings"
+        )
+
+
+        self.tree.pack(
+            side=tk.LEFT,
+            fill=tk.BOTH,
+            expand=True
+        )
+
+
+        # Scroll vertical
+        vsb = ttk.Scrollbar(
+            tree_frame,
+            orient=tk.VERTICAL,
+            command=self.tree.yview
+        )
+
+
+        vsb.pack(
+            side=tk.RIGHT,
+            fill=tk.Y
+        )
+
+
+        # Scroll horizontal
+        hsb = ttk.Scrollbar(
+            parent,
+            orient=tk.HORIZONTAL,
+            command=self.tree.xview
+        )
+
+
+        hsb.pack(
+            fill=tk.X
+        )
+
+
+        self.tree.configure(
+            yscrollcommand=vsb.set,
+            xscrollcommand=hsb.set
+        )
+
+
+        # Estilos
+        style = ttk.Style()
+
+
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+
+
+        style.configure(
+            "Treeview",
+            background=self.COLORS["bg_lighter"],
+            foreground=self.COLORS["text"],
+            fieldbackground=self.COLORS["bg_lighter"],
+            rowheight=30,
+            borderwidth=0
+        )
+
+
+        style.configure(
+            "Treeview.Heading",
+            background=self.COLORS["accent"],
+            foreground=self.COLORS["bg_dark"],
+            font=("Segoe UI", 9, "bold"),
+            borderwidth=1
+        )
+
+
+        style.map(
+            "Treeview",
+            background=[
+                (
+                    "selected",
+                    self.COLORS["accent"]
+                )
+            ],
+            foreground=[
+                (
+                    "selected",
+                    self.COLORS["bg_dark"]
+                )
+            ]
+        )
+
+
+    def _fill_treeview(self):
+
+
+        if not self.tree:
+            return
+
+
+        self.tree.delete(
+            *self.tree.get_children()
+        )
+
+
+        self.tree["columns"] = (
+            self.current_columns
+        )
+
+
+        self.tree["show"] = "headings"
+
+
+        for col in self.current_columns:
+
+
+            # Calcular ancho
+            width = max(
+                100,
+                min(
+                    250,
+                    len(col) * 12
+                )
+            )
+
+
+            self.tree.column(
+                col,
+                width=width,
+                anchor=tk.CENTER
+            )
+
+
+            self.tree.heading(
+                col,
+                text=col.replace(
+                    "_",
+                    " "
+                ).title()
+            )
+
+
+        # Insertar datos
+        for row in self.current_data:
+
+
+            self.tree.insert(
+                "",
+                tk.END,
+                values=row
+            )
+
+
+    # ========================================================
+    # BOTONES CRUD
+    # ========================================================
+
+
+    def _setup_crud_buttons(
+        self,
+        parent
+    ):
+
+
+        buttons = [
+
+
+            (
+                "➕ Nuevo",
+                self._open_new_dialog,
+                self.COLORS["success"]
+            ),
+
+
+            (
+                "✏️ Editar",
+                self._open_edit_dialog,
+                self.COLORS["accent"]
+            ),
+
+
+            (
+                "🗑️ Eliminar",
+                self._delete_record,
+                self.COLORS["error"]
+            ),
+
+
+            (
+                "🔄 Actualizar",
+                self._refresh_data,
+                self.COLORS["bg_lighter"]
+            )
+
+
+        ]
+
+
+        for label, command, color in buttons:
+
+
+            btn = tk.Button(
+                parent,
+                text=label,
+                command=command,
+                bg=color,
+                fg=(
+                    self.COLORS["bg_dark"]
+                    if color != self.COLORS["bg_lighter"]
+                    else self.COLORS["text"]
+                ),
+                font=("Segoe UI", 10, "bold"),
+                relief=tk.FLAT,
+                padx=18,
+                pady=8,
+                cursor="hand2",
+                activebackground=color
+            )
+
+
+            btn.pack(
+                side=tk.LEFT,
+                padx=5
+            )
+
+
+    # ========================================================
+    # REFRESCAR
+    # ========================================================
+
+
+    def _refresh_data(self):
+
+
+        if self.current_table:
+
+
+            self._load_table(
+                self.current_table
+            )
+
+
+        else:
+
+
+            self._show_dashboard()
+
+
+    # ========================================================
+    # NUEVO REGISTRO
+    # ========================================================
+
+
+    def _open_new_dialog(self):
+
+
+        if not self.current_table:
+
+
+            messagebox.showinfo(
+                "Info",
+                "Selecciona una tabla primero"
+            )
+
+
+            return
+
+
+        self._show_crud_dialog(
+            "Nuevo registro",
+            "CREATE"
+        )
+
+
+    # ========================================================
+    # EDITAR
+    # ========================================================
+
+
+    def _open_edit_dialog(self):
+
+
+        if not self.tree:
+            return
+
+
+        selection = self.tree.selection()
+
+
+        if not selection:
+
+
+            messagebox.showinfo(
+                "Info",
+                "Selecciona un registro para editar"
+            )
+
+
+            return
+
+
+        self._show_crud_dialog(
+            "Editar registro",
+            "UPDATE",
+            selection[0]
+        )
+
+
+    # ========================================================
+    # DIÁLOGO CRUD
+    # ========================================================
+
+
+    def _show_crud_dialog(
+        self,
+        title: str,
+        operation: str,
+        item: Optional[str] = None
+    ):
+
+
+        dialog = tk.Toplevel(
+            self.root
+        )
+
+
+        dialog.title(title)
+
+
+        dialog.geometry(
+            "500x600"
+        )
+
+
+        dialog.configure(
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        dialog.grab_set()
+
+
+        dialog.transient(
+            self.root
+        )
+
+
+        # Canvas
+        canvas = tk.Canvas(
+            dialog,
+            bg=self.COLORS["bg_dark"],
+            highlightthickness=0
+        )
+
+
+        scrollbar = ttk.Scrollbar(
+            dialog,
+            orient=tk.VERTICAL,
+            command=canvas.yview
+        )
+
+
+        scroll_frame = tk.Frame(
+            canvas,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+
+        canvas.create_window(
+            (0, 0),
+            window=scroll_frame,
+            anchor="nw"
+        )
+
+
+        canvas.configure(
+            yscrollcommand=scrollbar.set
+        )
+
+
+        canvas.pack(
+            side=tk.LEFT,
+            fill=tk.BOTH,
+            expand=True,
+            padx=10,
+            pady=10
+        )
+
+
+        scrollbar.pack(
+            side=tk.RIGHT,
+            fill=tk.Y
+        )
+
+
+        # Entries
+        entries: Dict[str, tk.Entry] = {}
+
+
+        for idx, col in enumerate(
+            self.current_columns
+        ):
+
+
+            label = tk.Label(
+                scroll_frame,
+                text=col.replace(
+                    "_",
+                    " "
+                ).title(),
+                bg=self.COLORS["bg_dark"],
+                fg=self.COLORS["text"],
+                font=("Segoe UI", 10)
+            )
+
+
+            label.pack(
+                pady=(10, 0),
+                padx=15,
+                anchor="w"
+            )
+
+
+            # ID en CREATE
+            if (
+                col.endswith("_id")
+                and operation == "CREATE"
+            ):
+
+
+                continue
+
+
+            # ID en UPDATE
+            elif col.endswith("_id"):
+
+
+                entry = tk.Entry(
+                    scroll_frame,
+                    bg=self.COLORS["bg_lighter"],
+                    fg=self.COLORS["text_muted"],
+                    font=("Segoe UI", 10),
+                    state="readonly"
+                )
+
+
+            else:
+
+
+                entry = tk.Entry(
+                    scroll_frame,
+                    bg=self.COLORS["bg_lighter"],
+                    fg=self.COLORS["text"],
+                    insertbackground=self.COLORS["accent"],
+                    font=("Segoe UI", 10)
+                )
+
+
+            entry.pack(
+                fill=tk.X,
+                padx=15,
+                pady=(0, 5)
+            )
+
+
+            entries[col] = entry
+
+
+        # Cargar datos para editar
+        if operation == "UPDATE" and item:
+
+
+            values = self.tree.item(
+                item
+            )["values"]
+
+
+            for idx, col in enumerate(
+                self.current_columns
+            ):
+
+
+                if col not in entries:
+                    continue
+
+
+                entry = entries[col]
+
+
+                if entry["state"] == "readonly":
+
+
+                    entry.config(
+                        state="normal"
+                    )
+
+
+                    entry.insert(
+                        0,
+                        str(values[idx])
+                    )
+
+
+                    entry.config(
+                        state="readonly"
+                    )
+
+
+                else:
+
+
+                    entry.insert(
+                        0,
+                        str(values[idx])
+                    )
+
+
+        # Botones
+        button_frame = tk.Frame(
+            scroll_frame,
+            bg=self.COLORS["bg_dark"]
+        )
+
+
+        button_frame.pack(
+            fill=tk.X,
+            padx=15,
+            pady=(20, 10)
+        )
+
+
+        save_btn = tk.Button(
+            button_frame,
+            text="💾 Guardar",
+            command=lambda: self._save_record(
+                dialog,
+                operation,
+                entries
+            ),
+            bg=self.COLORS["success"],
+            fg=self.COLORS["bg_dark"],
+            font=("Segoe UI", 10, "bold"),
+            relief=tk.FLAT,
+            padx=20,
+            pady=8,
+            cursor="hand2"
+        )
+
+
+        save_btn.pack(
+            side=tk.LEFT,
+            padx=5
+        )
+
+
+        cancel_btn = tk.Button(
+            button_frame,
+            text="❌ Cancelar",
+            command=dialog.destroy,
+            bg=self.COLORS["bg_lighter"],
+            fg=self.COLORS["text"],
+            font=("Segoe UI", 10),
+            relief=tk.FLAT,
+            padx=20,
+            pady=8,
+            cursor="hand2"
+        )
+
+
+        cancel_btn.pack(
+            side=tk.LEFT,
+            padx=5
+        )
+
+
+    # ========================================================
+    # GUARDAR
+    # ========================================================
+
+
+    def _save_record(
+        self,
+        dialog,
+        operation,
+        entries
+    ):
+
+
+        try:
+
+
+            if operation == "CREATE":
+
+
+                self._insert_record(
+                    entries
+                )
+
+
+            elif operation == "UPDATE":
+
+
+                self._update_record(
+                    entries
+                )
+
+
+            messagebox.showinfo(
+                "Éxito",
+                f"Registro {operation.lower()}do correctamente"
+            )
+
+
+            dialog.destroy()
+
+
+            # Actualizar tabla
+            self._refresh_data()
+
+
+        except Error as e:
+
+
+            messagebox.showerror(
+                "Error",
+                f"Error al guardar:\n{e}"
+            )
+
+
+            self._update_status(
+                f"Error: {str(e)}",
+                "error"
+            )
+
+
+        except ValueError as e:
+
+
+            messagebox.showwarning(
+                "Advertencia",
+                str(e)
+            )
+
+
+    # ========================================================
+    # INSERTAR
+    # ========================================================
+
+
+    def _insert_record(
+        self,
+        entries
+    ):
+
+
+        cols = []
+
+
+        vals = []
+
+
+        for col, entry in entries.items():
+
+
+            value = entry.get().strip()
+
+
+            if value:
+
+
+                cols.append(col)
+
+
+                vals.append(value)
+
+
+        if not cols:
+
+
+            raise ValueError(
+                "Debe rellenar al menos un campo"
+            )
+
+
+        placeholders = ", ".join(
+            ["%s"] * len(cols)
+        )
+
+
+        query = (
+            f"INSERT INTO {self.current_table} "
+            f"({', '.join(cols)}) "
+            f"VALUES ({placeholders})"
+        )
+
+
+        self.db.execute_update(
+            query,
+            tuple(vals)
+        )
+
+
+        self._update_status(
+            f"Registro insertado en '{self.current_table}'",
+            "success"
+        )
+
+
+    # ========================================================
+    # ACTUALIZAR
+    # ========================================================
+
+
+    def _update_record(
+        self,
+        entries
+    ):
+
+
+        id_col = next(
+            (
+                col
+                for col in self.current_columns
+                if col.endswith("_id")
+            ),
+            None
+        )
+
+
+        if not id_col:
+
+
+            raise ValueError(
+                "No se encontró columna ID"
+            )
+
+
+        record_id = entries[
+            id_col
+        ].get()
+
+
+        updates = []
+
+
+        vals = []
+
+
+        for col, entry in entries.items():
+
+
+            if col == id_col:
+                continue
+
+
+            value = entry.get().strip()
+
+
+            if value:
+
+
+                updates.append(
+                    f"{col} = %s"
+                )
+
+
+                vals.append(value)
+
+
+        if not updates:
+
+
+            raise ValueError(
+                "Debe rellenar al menos un campo "
+                "para actualizar"
+            )
+
+
+        vals.append(
+            record_id
+        )
+
+
+        query = (
+            f"UPDATE {self.current_table} "
+            f"SET {', '.join(updates)} "
+            f"WHERE {id_col} = %s"
+        )
+
+
+        self.db.execute_update(
+            query,
+            tuple(vals)
+        )
+
+
+        self._update_status(
+            f"Registro actualizado en '{self.current_table}'",
+            "success"
+        )
+
+
+    # ========================================================
+    # ELIMINAR
+    # ========================================================
+
+
+    def _delete_record(self):
+
+
+        if not self.tree:
+
+
+            return
+
+
+        selection = self.tree.selection()
+
+
+        if not selection:
+
+
+            messagebox.showinfo(
+                "Info",
+                "Selecciona un registro para eliminar"
+            )
+
+
+            return
+
+
+        confirmar = messagebox.askyesno(
+            "Confirmar",
+            "¿Eliminar este registro?"
+        )
+
+
+        if not confirmar:
+            return
+
+
+        try:
+
+
+            values = self.tree.item(
+                selection[0]
+            )["values"]
+
+
+            id_col = self.current_columns[0]
+
+
+            query = (
+                f"DELETE FROM {self.current_table} "
+                f"WHERE {id_col} = %s"
+            )
+
+
+            self.db.execute_update(
+                query,
+                (values[0],)
+            )
+
+
+            messagebox.showinfo(
+                "Éxito",
+                "Registro eliminado correctamente"
+            )
+
+
+            self._refresh_data()
+
+
+        except Error as e:
+
+
+            messagebox.showerror(
+                "Error",
+                f"Error al eliminar:\n{e}"
+            )
+
+
+            self._update_status(
+                f"Error: {str(e)}",
+                "error"
+            )
+
+
+    # ========================================================
+    # CERRAR APLICACIÓN
+    # ========================================================
+
+
+    def _on_closing(self):
+
+
+        self.db.disconnect()
+
+
+        self.root.destroy()
+
+
+
+
+# ============================================================
+# FUNCIÓN PRINCIPAL
+# ============================================================
+
+
+def main():
+
+
+    root = tk.Tk()
+
+
+    db_config = DBConfig(
+
+
+        host="localhost",
+
+
+        user="root",
+
+
+        password="032615",
+
+
+        database="biblioteca_db"
+    )
+
+
+    app = BibliotecaApp(
+        root,
+        db_config
+    )
+
+
+    root.mainloop()
+
+
+
+
+# ============================================================
+# EJECUTAR
+# ============================================================
+
+
+if __name__ == "__main__":
+
+
+    main()
+
+
+
